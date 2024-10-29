@@ -1,23 +1,37 @@
 package bot
 
 import (
-	"github.com/bifidokk/receipt-bot/internal/service"
+	"github.com/bifidokk/recipe-bot/internal/service"
+	"github.com/bifidokk/recipe-bot/internal/service/utils"
 	"gopkg.in/tucnak/telebot.v2"
 	"log"
 )
 
 type botService struct {
-	bot *telebot.Bot
+	bot          *telebot.Bot
+	apiToken     string
+	openai       service.OpenAIClient
+	videoService service.VideoService
 }
 
-func NewBotService(bot *telebot.Bot) service.BotService {
-	return &botService{bot}
+func NewBotService(
+	bot *telebot.Bot,
+	apiToken string,
+	openai service.OpenAIClient,
+	videoService service.VideoService,
+) service.BotService {
+	return &botService{
+		bot,
+		apiToken,
+		openai,
+		videoService,
+	}
 }
 
 func (bs *botService) Start() error {
 	log.Println("Starting bot")
 
-	bs.bot.Handle(telebot.OnText, resolveMessage)
+	bs.bot.Handle(telebot.OnText, bs.onTextMessage)
 
 	log.Println("Bot started!")
 	go func() {
@@ -27,6 +41,32 @@ func (bs *botService) Start() error {
 	return nil
 }
 
-func resolveMessage(message *telebot.Message) {
+func (bs *botService) onTextMessage(message *telebot.Message) {
 	log.Println(message.Text)
+
+	videoData, err := bs.videoService.GetVideoData(message.Text)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	log.Println(videoData)
+
+	filePath, err := utils.DownloadFileFromURL(videoData.AudioURL)
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	text, err := bs.openai.ConvertSpeechToText(filePath)
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	recipeText, err := bs.openai.TextToFormattedRecipe(text, videoData.Description)
+
+	bs.bot.Send(message.Sender, recipeText)
 }

@@ -2,7 +2,7 @@ package app
 
 import (
 	"context"
-	"github.com/bifidokk/receipt-bot/internal/config"
+	"github.com/bifidokk/recipe-bot/internal/config"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 

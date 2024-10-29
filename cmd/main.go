@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	application "github.com/bifidokk/receipt-bot/internal/app"
+	application "github.com/bifidokk/recipe-bot/internal/app"
 )
 
 func main() {
