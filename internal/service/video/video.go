@@ -76,19 +76,15 @@ func (t *videoService) extractVideoIdentification(message string) (*videoIdentif
 }
 
 func extractShareTikTokURL(s string) string {
-	tiktokShareURLPattern := `https?://(vm|vt)\.tiktok\.com/[A-Za-z0-9]+/?`
-	re := regexp.MustCompile(tiktokShareURLPattern)
-	match := re.FindString(s)
+	tikTokShareURLPattern := regexp.MustCompile(`https?://(vm|vt)\.tiktok\.com/[A-Za-z0-9]+/?`)
 
-	return match
+	return tikTokShareURLPattern.FindString(s)
 }
 
 func extractTikTokVideoId(message string) string {
-	tiktokVideoIDPattern := `https?://(www\.)?tiktok\.com/@[A-Za-z0-9_.]+/video/([0-9]+)`
-	re := regexp.MustCompile(tiktokVideoIDPattern)
-	matches := re.FindStringSubmatch(message)
-
-	if len(matches) > 2 {
+	tiktokVideoIDPattern := regexp.MustCompile(`https?://(www\.)?tiktok\.com/@[A-Za-z0-9_.]+/video/([0-9]+)`)
+	
+	if matches := tiktokVideoIDPattern.FindStringSubmatch(message); len(matches) > 2 {
 		return matches[2] // The second capture group is the video ID
 	}
 
