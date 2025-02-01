@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	// #nosec G101
 	tokenEnvName = "TG_BOT_TOKEN"
 )
 

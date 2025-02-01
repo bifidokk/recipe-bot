@@ -2,9 +2,10 @@ package openai
 
 import (
 	"context"
-	"github.com/sashabaranov/go-openai"
 	"log"
 	"strings"
+
+	"github.com/sashabaranov/go-openai"
 )
 
 const speechToTextPromt string = "Use capital letters and punctuation. Do not repeat yourself. Do not describe ambient sounds or noise or silence, just ommit. Break the text into paragraphs. Separate paragraphs with blank lines"
@@ -33,19 +34,19 @@ Message2:
 ###
 `
 
-type OpenAIClient struct {
+type Client struct {
 	client *openai.Client
 }
 
-func NewOpenAIClient(token string) *OpenAIClient {
+func NewOpenAIClient(token string) *Client {
 	client := openai.NewClient(token)
 
-	return &OpenAIClient{
+	return &Client{
 		client: client,
 	}
 }
 
-func (c OpenAIClient) ConvertSpeechToText(inputFile string) (string, error) {
+func (c Client) ConvertSpeechToText(inputFile string) (string, error) {
 	ctx := context.Background()
 
 	req := openai.AudioRequest{
@@ -66,7 +67,7 @@ func (c OpenAIClient) ConvertSpeechToText(inputFile string) (string, error) {
 	return resp.Text, nil
 }
 
-func (c OpenAIClient) TextToFormattedRecipe(speechText string, descriptionText string) (string, error) {
+func (c Client) TextToFormattedRecipe(speechText string, descriptionText string) (string, error) {
 	ctx := context.Background()
 
 	message := strings.Replace(textToRecipePromt, "{message1}", speechText, 1)

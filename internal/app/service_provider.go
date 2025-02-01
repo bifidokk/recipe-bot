@@ -1,6 +1,10 @@
 package app
 
 import (
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/bifidokk/recipe-bot/internal/config"
 	"github.com/bifidokk/recipe-bot/internal/service"
 	"github.com/bifidokk/recipe-bot/internal/service/api/openai"
@@ -8,9 +12,6 @@ import (
 	botService "github.com/bifidokk/recipe-bot/internal/service/bot"
 	"github.com/bifidokk/recipe-bot/internal/service/video"
 	tb "gopkg.in/tucnak/telebot.v2"
-	"log"
-	"net/http"
-	"time"
 )
 
 type serviceProvider struct {

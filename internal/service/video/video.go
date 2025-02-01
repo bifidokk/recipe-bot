@@ -2,13 +2,14 @@ package video
 
 import (
 	"errors"
+	"regexp"
+
 	"github.com/bifidokk/recipe-bot/internal/service"
 	"github.com/bifidokk/recipe-bot/internal/service/api"
-	"regexp"
 )
 
 const SharedURL = "shared_url"
-const VideoId = "video_id"
+const VideoID = "video_id"
 
 const TikTok = "tiktok"
 
@@ -43,8 +44,8 @@ func (t *videoService) GetVideoData(message string) (*api.VideoData, error) {
 			return t.tikhub.GetVideoDataBySharedURL(videoIdentificator.id)
 		}
 
-		if videoIdentificator.idType == VideoId {
-			return t.tikhub.GetVideoDataByVideoId(videoIdentificator.id)
+		if videoIdentificator.idType == VideoID {
+			return t.tikhub.GetVideoDataByVideoID(videoIdentificator.id)
 		}
 	}
 
@@ -62,12 +63,12 @@ func (t *videoService) extractVideoIdentification(message string) (*videoIdentif
 		}, nil
 	}
 
-	id = extractTikTokVideoId(message)
+	id = extractTikTokVideoID(message)
 
 	if len(id) > 0 {
 		return &videoIdentification{
 			id:     id,
-			idType: VideoId,
+			idType: VideoID,
 			source: TikTok,
 		}, nil
 	}
@@ -81,9 +82,9 @@ func extractShareTikTokURL(s string) string {
 	return tikTokShareURLPattern.FindString(s)
 }
 
-func extractTikTokVideoId(message string) string {
+func extractTikTokVideoID(message string) string {
 	tiktokVideoIDPattern := regexp.MustCompile(`https?://(www\.)?tiktok\.com/@[A-Za-z0-9_.]+/video/([0-9]+)`)
-	
+
 	if matches := tiktokVideoIDPattern.FindStringSubmatch(message); len(matches) > 2 {
 		return matches[2] // The second capture group is the video ID
 	}

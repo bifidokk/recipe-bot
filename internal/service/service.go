@@ -15,7 +15,7 @@ type OpenAIClient interface {
 
 type TikHubClient interface {
 	GetVideoDataBySharedURL(sharedURL string) (*api.VideoData, error)
-	GetVideoDataByVideoId(videoId string) (*api.VideoData, error)
+	GetVideoDataByVideoID(videoID string) (*api.VideoData, error)
 }
 
 type VideoService interface {

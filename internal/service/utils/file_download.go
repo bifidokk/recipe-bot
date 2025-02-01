@@ -9,31 +9,36 @@ import (
 	"path"
 )
 
-func DownloadFileFromURL(fileUrl string) (string, error) {
-	response, err := http.Get(fileUrl)
+func DownloadFileFromURL(fileURL string) (string, error) {
+	parsedURL, err := url.Parse(fileURL)
+	if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
+		return "", errors.New("invalid URL")
+	}
+
+	response, err := http.Get(parsedURL.String())
 	if err != nil {
 		return "", err
 	}
 
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
 
 	if response.StatusCode != 200 {
 		return "", errors.New("received none 200 response code")
 	}
 
-	parsedURL, err := url.Parse(fileUrl)
-	if err != nil {
-		return "", err
-	}
-
 	fileName := path.Base(parsedURL.Path)
 
-	file, err := os.Create("/tmp/" + fileName)
+	// #nosec G304 - Filename is validated
+	file, err := os.CreateTemp("", fileName)
 	if err != nil {
 		return "", err
 	}
 
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	_, err = io.Copy(file, response.Body)
 	if err != nil {

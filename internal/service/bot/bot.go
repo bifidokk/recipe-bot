@@ -1,10 +1,11 @@
 package bot
 
 import (
+	"log"
+
 	"github.com/bifidokk/recipe-bot/internal/service"
 	"github.com/bifidokk/recipe-bot/internal/service/utils"
 	"gopkg.in/tucnak/telebot.v2"
-	"log"
 )
 
 type botService struct {
@@ -68,5 +69,14 @@ func (bs *botService) onTextMessage(message *telebot.Message) {
 
 	recipeText, err := bs.openai.TextToFormattedRecipe(text, videoData.Description)
 
-	bs.bot.Send(message.Sender, recipeText)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	_, err = bs.bot.Send(message.Sender, recipeText)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 }

@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	// #nosec G101
 	tikTokAPITokenEnvName = "TIK_TOK_TOKEN"
 )
 

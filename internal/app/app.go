@@ -2,13 +2,12 @@ package app
 
 import (
 	"context"
+
 	"github.com/bifidokk/recipe-bot/internal/config"
-	tb "gopkg.in/tucnak/telebot.v2"
 )
 
 type App struct {
 	serviceProvider *serviceProvider
-	bot             *tb.Bot
 }
 
 func NewApp(ctx context.Context) (*App, error) {
@@ -43,7 +42,7 @@ func (app *App) initDependencies(ctx context.Context) error {
 	return nil
 }
 
-func (app *App) initConfig(ctx context.Context) error {
+func (app *App) initConfig(_ context.Context) error {
 	err := config.Load(".env")
 	if err != nil {
 		return err

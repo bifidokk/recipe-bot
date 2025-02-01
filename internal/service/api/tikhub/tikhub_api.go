@@ -3,13 +3,14 @@ package tikhub
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bifidokk/recipe-bot/internal/service/api"
 	"io"
 	"net/http"
+
+	"github.com/bifidokk/recipe-bot/internal/service/api"
 )
 
 const tikTokGetVideoByShareURL = "https://beta.tikhub.io/api/v1/tiktok/app/v3/fetch_one_video_by_share_url?share_url="
-const tikTokGetVideoById = "https://beta.tikhub.io/api/v1/tiktok/app/v3/fetch_one_video?aweme_id="
+const tikTokGetVideoByID = "https://beta.tikhub.io/api/v1/tiktok/app/v3/fetch_one_video?aweme_id="
 
 type VideoDataResponse struct {
 	Data struct {
@@ -26,21 +27,21 @@ type VideoDataResponse struct {
 	} `json:"data"`
 }
 
-type TikHubClient struct {
+type Client struct {
 	httpClient *http.Client
 	apiToken   string
 }
 
-func NewTikHubClient(apiToken string) *TikHubClient {
+func NewTikHubClient(apiToken string) *Client {
 	client := &http.Client{}
 
-	return &TikHubClient{
+	return &Client{
 		httpClient: client,
 		apiToken:   apiToken,
 	}
 }
 
-func (t *TikHubClient) GetVideoDataBySharedURL(sharedURL string) (*api.VideoData, error) {
+func (t *Client) GetVideoDataBySharedURL(sharedURL string) (*api.VideoData, error) {
 	response, err := t.request("GET", tikTokGetVideoByShareURL+sharedURL, nil)
 
 	if err != nil {
@@ -60,8 +61,8 @@ func (t *TikHubClient) GetVideoDataBySharedURL(sharedURL string) (*api.VideoData
 	}, nil
 }
 
-func (t *TikHubClient) GetVideoDataByVideoId(videoId string) (*api.VideoData, error) {
-	response, err := t.request("GET", tikTokGetVideoById+videoId, nil)
+func (t *Client) GetVideoDataByVideoID(videoID string) (*api.VideoData, error) {
+	response, err := t.request("GET", tikTokGetVideoByID+videoID, nil)
 
 	if err != nil {
 		return nil, err
@@ -81,7 +82,7 @@ func (t *TikHubClient) GetVideoDataByVideoId(videoId string) (*api.VideoData, er
 
 }
 
-func (t *TikHubClient) request(method string, url string, body io.Reader) ([]byte, error) {
+func (t *Client) request(method string, url string, body io.Reader) ([]byte, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
@@ -93,7 +94,9 @@ func (t *TikHubClient) request(method string, url string, body io.Reader) ([]byt
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to fetch data: %s", resp.Status)
