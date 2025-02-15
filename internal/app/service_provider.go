@@ -1,7 +1,6 @@
 package app
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/bifidokk/recipe-bot/internal/service/api/tikhub"
 	botService "github.com/bifidokk/recipe-bot/internal/service/bot"
 	"github.com/bifidokk/recipe-bot/internal/service/video"
+	"github.com/rs/zerolog/log"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
@@ -34,7 +34,7 @@ func (sp *serviceProvider) TgBotConfig() config.TgBotConfig {
 		tgBotConfig, err := config.NewTgBotConfig()
 
 		if err != nil {
-			log.Fatalf("failed to get tg bot config: %v", err)
+			log.Fatal().Err(err).Msg("Failed to get tg bot config")
 		}
 
 		sp.tgBotConfig = tgBotConfig
@@ -48,7 +48,7 @@ func (sp *serviceProvider) TikTokAPIConfig() config.TikTokAPIConfig {
 		tikTokAPIConfig, err := config.NewTikTokAPIConfig()
 
 		if err != nil {
-			log.Fatalf("failed to get tik tok API config: %v", err)
+			log.Fatal().Err(err).Msg("Failed to get tik tok API config")
 		}
 
 		sp.tikTokAPIConfig = tikTokAPIConfig
@@ -62,7 +62,7 @@ func (sp *serviceProvider) OpenAIAPIConfig() config.OpenAIAPIConfig {
 		openAIAPIConfig, err := config.NewOpenAIAPIConfig()
 
 		if err != nil {
-			log.Fatalf("failed to get open ai API config: %v", err)
+			log.Fatal().Err(err).Msg("Failed to get open ai API config")
 		}
 
 		sp.openAIAPIConfig = openAIAPIConfig
@@ -82,7 +82,7 @@ func (sp *serviceProvider) BotService() service.BotService {
 		})
 
 		if err != nil {
-			log.Fatalf("failed to init tg bot: %v", err)
+			log.Fatal().Err(err).Msg("Failed  to init tg bot")
 		}
 
 		sp.botService = botService.NewBotService(

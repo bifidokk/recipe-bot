@@ -2,9 +2,9 @@ package openai
 
 import (
 	"context"
-	"log"
 	"strings"
 
+	"github.com/rs/zerolog/log"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -58,11 +58,11 @@ func (c Client) ConvertSpeechToText(inputFile string) (string, error) {
 	resp, err := c.client.CreateTranscription(ctx, req)
 
 	if err != nil {
-		log.Printf("Transcription error: %v\n", err)
+		log.Error().Err(err).Msg("Transcription error")
 		return "", err
 	}
 
-	log.Println(resp.Text)
+	log.Info().Msgf("Result text: %v", resp.Text)
 
 	return resp.Text, nil
 }
@@ -86,11 +86,11 @@ func (c Client) TextToFormattedRecipe(speechText string, descriptionText string)
 	resp, err := c.client.CreateChatCompletion(ctx, req)
 
 	if err != nil {
-		log.Printf("Chat completion error: %v\n", err)
+		log.Error().Err(err).Msg("Open AI chat completion error")
 		return "", err
 	}
 
-	log.Println(resp.Choices[0].Message.Content)
+	log.Info().Msgf("Chat completion result: %v", resp.Choices[0].Message.Content)
 
 	return resp.Choices[0].Message.Content, nil
 }

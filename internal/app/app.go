@@ -2,6 +2,11 @@ package app
 
 import (
 	"context"
+	"io"
+	"os"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/bifidokk/recipe-bot/internal/config"
 )
@@ -31,6 +36,7 @@ func (app *App) initDependencies(ctx context.Context) error {
 	inits := []func(context context.Context) error{
 		app.initConfig,
 		app.initServiceProvider,
+		app.initLogger,
 	}
 
 	for _, initFunction := range inits {
@@ -53,6 +59,18 @@ func (app *App) initConfig(_ context.Context) error {
 
 func (app *App) initServiceProvider(_ context.Context) error {
 	app.serviceProvider = newServiceProvider()
+
+	return nil
+}
+
+func (app *App) initLogger(_ context.Context) error {
+	logFile, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	if err != nil {
+		return err
+	}
+
+	multi := io.MultiWriter(zerolog.ConsoleWriter{Out: os.Stdout}, logFile)
+	log.Logger = zerolog.New(multi).With().Timestamp().Logger()
 
 	return nil
 }

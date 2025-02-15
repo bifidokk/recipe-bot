@@ -3,3 +3,4 @@
 /.vscode
 /.docker/bot_dev.env
 /.docker/db/
+/app.log
