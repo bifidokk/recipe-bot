@@ -1,6 +1,9 @@
 package app
 
 import (
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"net/http"
 	"time"
 
@@ -18,6 +21,9 @@ type serviceProvider struct {
 	tgBotConfig     config.TgBotConfig
 	tikTokAPIConfig config.TikTokAPIConfig
 	openAIAPIConfig config.OpenAIAPIConfig
+	pgConfig        config.PgConfig
+
+	db *gorm.DB
 
 	botService   service.BotService
 	openAIClient service.OpenAIClient
@@ -69,6 +75,47 @@ func (sp *serviceProvider) OpenAIAPIConfig() config.OpenAIAPIConfig {
 	}
 
 	return sp.openAIAPIConfig
+}
+
+func (sp *serviceProvider) PgConfig() config.PgConfig {
+	if sp.pgConfig == nil {
+		pgConfig, err := config.NewPgConfig()
+
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to get pg config")
+		}
+
+		sp.pgConfig = pgConfig
+	}
+
+	return sp.pgConfig
+}
+
+func (sp *serviceProvider) DB() *gorm.DB {
+	if sp.db == nil {
+		db, err := gorm.Open(postgres.Open(sp.PgConfig().Dsn()), &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Info),
+		})
+
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to connect to database")
+		}
+
+		sqlDB, err := db.DB()
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to get database instance")
+		}
+
+		log.Info().Msg("Connected to database")
+
+		sqlDB.SetMaxOpenConns(25)
+		sqlDB.SetMaxIdleConns(10)
+		sqlDB.SetConnMaxLifetime(5 * time.Minute)
+
+		sp.db = db
+	}
+
+	return sp.db
 }
 
 func (sp *serviceProvider) BotService() service.BotService {

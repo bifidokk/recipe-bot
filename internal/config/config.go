@@ -11,3 +11,7 @@ type TikTokAPIConfig interface {
 type OpenAIAPIConfig interface {
 	Token() string
 }
+
+type PgConfig interface {
+	Dsn() string
+}
