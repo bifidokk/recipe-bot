@@ -1,11 +1,12 @@
 package app
 
 import (
+	"net/http"
+	"time"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"net/http"
-	"time"
 
 	"github.com/bifidokk/recipe-bot/internal/config"
 	"github.com/bifidokk/recipe-bot/internal/service"
