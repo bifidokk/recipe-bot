@@ -6,17 +6,16 @@ run:
   tests: true
 
 output:
-  formats: colored-line-number
+  formats:
+    - format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
 
 linters-settings:
-  govet:
-    shadow: true
   dupl:
     threshold: 100
   goconst:
-    min-len:         2
+    min-len: 2
     min-occurrences: 2
 
 linters:
@@ -33,7 +32,6 @@ linters:
     - unused
     - revive
     - typecheck
-    - unused
 
 issues:
   exclude-use-default: false
