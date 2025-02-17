@@ -2,12 +2,11 @@ package main
 
 import (
 	"context"
+	application "github.com/bifidokk/recipe-bot/internal/app"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-
-	application "github.com/bifidokk/recipe-bot/internal/app"
 )
 
 func main() {

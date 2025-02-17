@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -71,6 +72,18 @@ func (app *App) initLogger(_ context.Context) error {
 
 	multi := io.MultiWriter(zerolog.ConsoleWriter{Out: os.Stdout}, logFile)
 	log.Logger = zerolog.New(multi).With().Timestamp().Logger()
+
+	go func(logFile *os.File, interval time.Duration) {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			err := logFile.Sync()
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to sync log file")
+			}
+		}
+	}(logFile, 60*time.Second)
 
 	return nil
 }
