@@ -25,7 +25,7 @@ func DownloadFileFromURL(fileURL string) (string, error) {
 	}
 
 	defer func() {
-		err := file.Close()
+		err = file.Close()
 		if err != nil {
 			return
 		}
@@ -38,7 +38,7 @@ func DownloadFileFromURL(fileURL string) (string, error) {
 	}
 
 	defer func() {
-		err := resp.Body.Close()
+		err = resp.Body.Close()
 		if err != nil {
 			return
 		}
