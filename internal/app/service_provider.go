@@ -4,9 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	"github.com/bifidokk/recipe-bot/internal/client"
+	"github.com/bifidokk/recipe-bot/internal/repository"
 
 	"github.com/bifidokk/recipe-bot/internal/config"
 	"github.com/bifidokk/recipe-bot/internal/service"
@@ -24,12 +23,14 @@ type serviceProvider struct {
 	openAIAPIConfig config.OpenAIAPIConfig
 	pgConfig        config.PgConfig
 
-	db *gorm.DB
+	db *client.DBClient
 
 	botService   service.BotService
 	openAIClient service.OpenAIClient
 	tikhubClient service.TikHubClient
 	videoService service.VideoService
+
+	userRepository *repository.UserRepository
 }
 
 func newServiceProvider() *serviceProvider {
@@ -92,26 +93,13 @@ func (sp *serviceProvider) PgConfig() config.PgConfig {
 	return sp.pgConfig
 }
 
-func (sp *serviceProvider) DB() *gorm.DB {
+func (sp *serviceProvider) DB() *client.DBClient {
 	if sp.db == nil {
-		db, err := gorm.Open(postgres.Open(sp.PgConfig().Dsn()), &gorm.Config{
-			Logger: logger.Default.LogMode(logger.Info),
-		})
+		db, err := client.NewDBClient(sp.PgConfig().Dsn())
 
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to connect to database")
 		}
-
-		sqlDB, err := db.DB()
-		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to get database instance")
-		}
-
-		log.Info().Msg("Connected to database")
-
-		sqlDB.SetMaxOpenConns(25)
-		sqlDB.SetMaxIdleConns(10)
-		sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
 		sp.db = db
 	}
@@ -166,4 +154,12 @@ func (sp *serviceProvider) VideoService() service.VideoService {
 	}
 
 	return sp.videoService
+}
+
+func (sp *serviceProvider) UserRepository() *repository.UserRepository {
+	if sp.userRepository == nil {
+		sp.userRepository = repository.NewUserRepository(sp.DB())
+	}
+
+	return sp.userRepository
 }

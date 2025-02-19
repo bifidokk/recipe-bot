@@ -34,6 +34,10 @@ func (app *App) Run() error {
 	return err
 }
 
+func (app *App) Shutdown() {
+	app.serviceProvider.DB().Close()
+}
+
 func (app *App) initDependencies(ctx context.Context) error {
 	inits := []func(context context.Context) error{
 		app.initConfig,
