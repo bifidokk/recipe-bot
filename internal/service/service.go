@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/bifidokk/recipe-bot/internal/entity"
 	"github.com/bifidokk/recipe-bot/internal/service/api"
 )
 
@@ -20,4 +21,9 @@ type TikHubClient interface {
 
 type VideoService interface {
 	GetVideoData(message string) (*api.VideoData, error)
+}
+
+type UserService interface {
+	GetUser(ID int64) (*entity.User, error)
+	CreateUser(user *entity.User) error
 }

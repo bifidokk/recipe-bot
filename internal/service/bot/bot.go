@@ -4,7 +4,7 @@ import (
 	"github.com/bifidokk/recipe-bot/internal/service"
 	"github.com/bifidokk/recipe-bot/internal/service/utils"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/tucnak/telebot.v2"
+	"gopkg.in/telebot.v4"
 )
 
 type botService struct {
@@ -41,14 +41,14 @@ func (bs *botService) Start() error {
 	return nil
 }
 
-func (bs *botService) onTextMessage(message *telebot.Message) {
-	log.Info().Msgf("Input text %v", message.Text)
+func (bs *botService) onTextMessage(c telebot.Context) error {
+	log.Info().Msgf("Input text %v", c.Text())
 
-	videoData, err := bs.videoService.GetVideoData(message.Text)
+	videoData, err := bs.videoService.GetVideoData(c.Text())
 
 	if err != nil {
 		log.Error().Err(err)
-		return
+		return err
 	}
 
 	log.Info().Msgf("Video data: %v", videoData)
@@ -57,26 +57,28 @@ func (bs *botService) onTextMessage(message *telebot.Message) {
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to download video file")
-		return
+		return err
 	}
 
 	text, err := bs.openai.ConvertSpeechToText(filePath)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to convert speech to text")
-		return
+		return err
 	}
 
 	recipeText, err := bs.openai.TextToFormattedRecipe(text, videoData.Description)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to convert text to recipe")
-		return
+		return err
 	}
 
-	_, err = bs.bot.Send(message.Sender, recipeText)
+	_, err = bs.bot.Send(c.Sender(), recipeText)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to send message")
-		return
+		return err
 	}
+
+	return nil
 }

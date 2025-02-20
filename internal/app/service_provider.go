@@ -4,6 +4,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/bifidokk/recipe-bot/internal/service/user"
+
+	"github.com/bifidokk/recipe-bot/internal/middleware"
+
 	"github.com/bifidokk/recipe-bot/internal/client"
 	"github.com/bifidokk/recipe-bot/internal/repository"
 
@@ -14,7 +18,7 @@ import (
 	botService "github.com/bifidokk/recipe-bot/internal/service/bot"
 	"github.com/bifidokk/recipe-bot/internal/service/video"
 	"github.com/rs/zerolog/log"
-	tb "gopkg.in/tucnak/telebot.v2"
+	tb "gopkg.in/telebot.v4"
 )
 
 type serviceProvider struct {
@@ -29,6 +33,7 @@ type serviceProvider struct {
 	openAIClient service.OpenAIClient
 	tikhubClient service.TikHubClient
 	videoService service.VideoService
+	userService  service.UserService
 
 	userRepository *repository.UserRepository
 }
@@ -121,6 +126,9 @@ func (sp *serviceProvider) BotService() service.BotService {
 			log.Fatal().Err(err).Msg("Failed  to init tg bot")
 		}
 
+		bot.Use(middleware.Logger())
+		bot.Use(middleware.TgAuth(sp.UserService()))
+
 		sp.botService = botService.NewBotService(
 			bot,
 			sp.TikTokAPIConfig().Token(),
@@ -162,4 +170,12 @@ func (sp *serviceProvider) UserRepository() *repository.UserRepository {
 	}
 
 	return sp.userRepository
+}
+
+func (sp *serviceProvider) UserService() service.UserService {
+	if sp.userService == nil {
+		sp.userService = user.NewUserService(sp.UserRepository())
+	}
+
+	return sp.userService
 }

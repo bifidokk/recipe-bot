@@ -33,7 +33,7 @@ func NewUserRepository(dbClient *client.DBClient) *UserRepository {
 	}
 }
 
-func (r *UserRepository) FindByTelegramID(ctx context.Context, id int) (*entity.User, error) {
+func (r *UserRepository) FindByTelegramID(ctx context.Context, id int64) (*entity.User, error) {
 	var user entity.User
 	query, args, err := r.sqlBuilder.Select(
 		idColumn, nameColumn, tgIDColumn, createdAtColumn, updatedAtColumn,
