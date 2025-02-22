@@ -21,20 +21,20 @@ func TgAuth(userService service.UserService) tb.MiddlewareFunc {
 			}
 
 			telegramID := c.Sender().ID
-			user, err := userService.GetUser(telegramID)
+			user, err := userService.GetUserByTelegramID(telegramID)
 
 			if err != nil {
-				log.Error().Err(err).Msg("failed to get user")
+				log.Error().Err(err).Msg("failed to get user by telegram id")
 				return err
 			}
 
 			if user == nil {
-				user = &entity.User{
+				userData := &entity.User{
 					TelegramID: strconv.FormatInt(c.Sender().ID, 10),
 					Name:       c.Sender().Username,
 				}
 
-				err = userService.CreateUser(user)
+				user, err = userService.CreateUser(userData)
 
 				if err != nil {
 					log.Error().Err(err).Msg("failed to create user")

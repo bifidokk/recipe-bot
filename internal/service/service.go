@@ -24,6 +24,6 @@ type VideoService interface {
 }
 
 type UserService interface {
-	GetUser(ID int64) (*entity.User, error)
-	CreateUser(user *entity.User) error
+	GetUserByTelegramID(ID int64) (*entity.User, error)
+	CreateUser(user *entity.User) (*entity.User, error)
 }
