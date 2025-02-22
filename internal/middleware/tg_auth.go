@@ -29,9 +29,19 @@ func TgAuth(userService service.UserService) tb.MiddlewareFunc {
 			}
 
 			if user == nil {
+				username := c.Sender().Username
+
+				if username == "" {
+					username = c.Sender().FirstName
+				}
+
 				userData := &entity.User{
 					TelegramID: strconv.FormatInt(c.Sender().ID, 10),
-					Name:       c.Sender().Username,
+					Name:       username,
+				}
+
+				if c.Sender().LanguageCode != "" {
+					userData.Language = c.Sender().LanguageCode
 				}
 
 				user, err = userService.CreateUser(userData)

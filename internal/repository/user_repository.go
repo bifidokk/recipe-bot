@@ -23,6 +23,7 @@ const (
 	idColumn        = "id"
 	nameColumn      = "name"
 	tgIDColumn      = "telegram_id"
+	languageColumn  = "language_code"
 	createdAtColumn = "created_at"
 	updatedAtColumn = "updated_at"
 )
@@ -37,7 +38,7 @@ func NewUserRepository(dbClient *client.DBClient) *UserRepository {
 func (r *UserRepository) FindByTelegramID(ctx context.Context, id int64) (*entity.User, error) {
 	var user entity.User
 	query, args, err := r.sqlBuilder.Select(
-		idColumn, nameColumn, tgIDColumn, createdAtColumn, updatedAtColumn,
+		idColumn, nameColumn, tgIDColumn, languageColumn, createdAtColumn, updatedAtColumn,
 	).
 		From(tableName).
 		Where(sq.Eq{tgIDColumn: strconv.Itoa(int(id))}).
@@ -60,7 +61,7 @@ func (r *UserRepository) FindByTelegramID(ctx context.Context, id int64) (*entit
 func (r *UserRepository) FindByID(ctx context.Context, id int) (*entity.User, error) {
 	var user entity.User
 	query, args, err := r.sqlBuilder.Select(
-		idColumn, nameColumn, tgIDColumn, createdAtColumn, updatedAtColumn,
+		idColumn, nameColumn, tgIDColumn, languageColumn, createdAtColumn, updatedAtColumn,
 	).
 		From(tableName).
 		Where(sq.Eq{idColumn: id}).
@@ -82,8 +83,8 @@ func (r *UserRepository) FindByID(ctx context.Context, id int) (*entity.User, er
 
 func (r *UserRepository) CreateUser(ctx context.Context, user *entity.User) (int, error) {
 	query, args, err := r.sqlBuilder.Insert(tableName).
-		Columns(nameColumn, tgIDColumn).
-		Values(user.Name, user.TelegramID).
+		Columns(nameColumn, tgIDColumn, languageColumn).
+		Values(user.Name, user.TelegramID, user.Language).
 		Suffix("RETURNING id").
 		ToSql()
 

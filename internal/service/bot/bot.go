@@ -47,6 +47,8 @@ func (bs *botService) onTextMessage(c telebot.Context) error {
 	videoData, err := bs.videoService.GetVideoData(c.Text())
 
 	if err != nil {
+		_, err = bs.bot.Send(c.Sender(), "Sorry but I could not get video data from your message")
+
 		log.Error().Err(err)
 		return err
 	}

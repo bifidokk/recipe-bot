@@ -4,6 +4,7 @@ CREATE TABLE users (
    id SERIAL PRIMARY KEY,
    name VARCHAR(255) NOT NULL,
    telegram_id VARCHAR(255) UNIQUE NOT NULL,
+   language_code VARCHAR(255) DEFAULT NULL,
    created_at TIMESTAMP DEFAULT now() NOT NULL,
    updated_at TIMESTAMP DEFAULT now() NOT NULL
 );
