@@ -3,19 +3,20 @@ package user
 import (
 	"context"
 
+	"github.com/bifidokk/recipe-bot/internal/repository/user"
+
 	"github.com/rs/zerolog/log"
 
 	"github.com/bifidokk/recipe-bot/internal/entity"
-	"github.com/bifidokk/recipe-bot/internal/repository"
 	"github.com/bifidokk/recipe-bot/internal/service"
 )
 
 type userService struct {
-	userRepository *repository.UserRepository
+	userRepository *user.Repository
 }
 
 func NewUserService(
-	userRepository *repository.UserRepository,
+	userRepository *user.Repository,
 ) service.UserService {
 	return &userService{
 		userRepository: userRepository,
@@ -24,25 +25,25 @@ func NewUserService(
 
 func (u userService) GetUserByTelegramID(ID int64) (*entity.User, error) {
 	ctx := context.Background()
-	user, err := u.userRepository.FindByTelegramID(ctx, ID)
+	usr, err := u.userRepository.FindByTelegramID(ctx, ID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return usr, nil
 }
 
 func (u userService) getUserByID(ID int) (*entity.User, error) {
 	ctx := context.Background()
 
-	user, err := u.userRepository.FindByID(ctx, ID)
+	usr, err := u.userRepository.FindByID(ctx, ID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return usr, nil
 }
 
 func (u userService) CreateUser(user *entity.User) (*entity.User, error) {

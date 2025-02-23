@@ -2,16 +2,18 @@ package bot
 
 import (
 	"github.com/bifidokk/recipe-bot/internal/service"
+	"github.com/bifidokk/recipe-bot/internal/service/recipe"
 	"github.com/bifidokk/recipe-bot/internal/service/utils"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/telebot.v4"
 )
 
 type botService struct {
-	bot          *telebot.Bot
-	apiToken     string
-	openai       service.OpenAIClient
-	videoService service.VideoService
+	bot           *telebot.Bot
+	apiToken      string
+	openai        service.OpenAIClient
+	videoService  service.VideoService
+	recipeService recipe.Service
 }
 
 func NewBotService(
@@ -19,12 +21,14 @@ func NewBotService(
 	apiToken string,
 	openai service.OpenAIClient,
 	videoService service.VideoService,
+	recipeService recipe.Service,
 ) service.BotService {
 	return &botService{
 		bot,
 		apiToken,
 		openai,
 		videoService,
+		recipeService,
 	}
 }
 
@@ -76,7 +80,19 @@ func (bs *botService) onTextMessage(c telebot.Context) error {
 		return err
 	}
 
-	_, err = bs.bot.Send(c.Sender(), recipeText)
+	r, err := bs.recipeService.CreateRecipe(
+		&recipe.CreateRecipeData{
+			RecipeMarkdownText: recipeText,
+		},
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to create recipe")
+		return err
+	}
+
+	_, err = bs.bot.Send(c.Sender(), r.RecipeMarkdownText)
+
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to send message")
 		return err

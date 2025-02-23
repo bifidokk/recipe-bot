@@ -4,12 +4,15 @@ import (
 	"net/http"
 	"time"
 
+	recipeRepo "github.com/bifidokk/recipe-bot/internal/repository/recipe"
+	userRepo "github.com/bifidokk/recipe-bot/internal/repository/user"
+	"github.com/bifidokk/recipe-bot/internal/service/recipe"
+
 	"github.com/bifidokk/recipe-bot/internal/service/user"
 
 	"github.com/bifidokk/recipe-bot/internal/middleware"
 
 	"github.com/bifidokk/recipe-bot/internal/client"
-	"github.com/bifidokk/recipe-bot/internal/repository"
 
 	"github.com/bifidokk/recipe-bot/internal/config"
 	"github.com/bifidokk/recipe-bot/internal/service"
@@ -29,13 +32,15 @@ type serviceProvider struct {
 
 	db *client.DBClient
 
-	botService   service.BotService
-	openAIClient service.OpenAIClient
-	tikhubClient service.TikHubClient
-	videoService service.VideoService
-	userService  service.UserService
+	botService    service.BotService
+	openAIClient  service.OpenAIClient
+	tikhubClient  service.TikHubClient
+	videoService  service.VideoService
+	userService   service.UserService
+	recipeService recipe.Service
 
-	userRepository *repository.UserRepository
+	userRepository   *userRepo.Repository
+	recipeRepository *recipeRepo.Repository
 }
 
 func newServiceProvider() *serviceProvider {
@@ -134,6 +139,7 @@ func (sp *serviceProvider) BotService() service.BotService {
 			sp.TikTokAPIConfig().Token(),
 			sp.OpenAIClient(),
 			sp.VideoService(),
+			sp.RecipeService(),
 		)
 	}
 
@@ -164,9 +170,9 @@ func (sp *serviceProvider) VideoService() service.VideoService {
 	return sp.videoService
 }
 
-func (sp *serviceProvider) UserRepository() *repository.UserRepository {
+func (sp *serviceProvider) UserRepository() *userRepo.Repository {
 	if sp.userRepository == nil {
-		sp.userRepository = repository.NewUserRepository(sp.DB())
+		sp.userRepository = userRepo.NewUserRepository(sp.DB())
 	}
 
 	return sp.userRepository
@@ -178,4 +184,20 @@ func (sp *serviceProvider) UserService() service.UserService {
 	}
 
 	return sp.userService
+}
+
+func (sp *serviceProvider) RecipeService() recipe.Service {
+	if sp.recipeService == nil {
+		sp.recipeService = recipe.NewRecipeService(sp.RecipeRepository())
+	}
+
+	return sp.recipeService
+}
+
+func (sp *serviceProvider) RecipeRepository() *recipeRepo.Repository {
+	if sp.recipeRepository == nil {
+		sp.recipeRepository = recipeRepo.NewRecipeRepository(sp.DB())
+	}
+
+	return sp.recipeRepository
 }

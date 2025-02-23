@@ -1,4 +1,4 @@
-package repository
+package user
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type UserRepository struct {
+type Repository struct {
 	db         *client.DBClient
 	sqlBuilder sq.StatementBuilderType
 }
@@ -28,14 +28,14 @@ const (
 	updatedAtColumn = "updated_at"
 )
 
-func NewUserRepository(dbClient *client.DBClient) *UserRepository {
-	return &UserRepository{
+func NewUserRepository(dbClient *client.DBClient) *Repository {
+	return &Repository{
 		db:         dbClient,
 		sqlBuilder: sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 	}
 }
 
-func (r *UserRepository) FindByTelegramID(ctx context.Context, id int64) (*entity.User, error) {
+func (r *Repository) FindByTelegramID(ctx context.Context, id int64) (*entity.User, error) {
 	var user entity.User
 	query, args, err := r.sqlBuilder.Select(
 		idColumn, nameColumn, tgIDColumn, languageColumn, createdAtColumn, updatedAtColumn,
@@ -58,7 +58,7 @@ func (r *UserRepository) FindByTelegramID(ctx context.Context, id int64) (*entit
 	return &user, nil
 }
 
-func (r *UserRepository) FindByID(ctx context.Context, id int) (*entity.User, error) {
+func (r *Repository) FindByID(ctx context.Context, id int) (*entity.User, error) {
 	var user entity.User
 	query, args, err := r.sqlBuilder.Select(
 		idColumn, nameColumn, tgIDColumn, languageColumn, createdAtColumn, updatedAtColumn,
@@ -81,7 +81,7 @@ func (r *UserRepository) FindByID(ctx context.Context, id int) (*entity.User, er
 	return &user, nil
 }
 
-func (r *UserRepository) CreateUser(ctx context.Context, user *entity.User) (int, error) {
+func (r *Repository) CreateUser(ctx context.Context, user *entity.User) (int, error) {
 	query, args, err := r.sqlBuilder.Insert(tableName).
 		Columns(nameColumn, tgIDColumn, languageColumn).
 		Values(user.Name, user.TelegramID, user.Language).
