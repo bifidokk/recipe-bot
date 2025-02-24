@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"github.com/bifidokk/recipe-bot/internal/entity"
 	"github.com/bifidokk/recipe-bot/internal/service"
 	"github.com/bifidokk/recipe-bot/internal/service/recipe"
 	"github.com/bifidokk/recipe-bot/internal/service/utils"
@@ -59,6 +60,13 @@ func (bs *botService) onTextMessage(c telebot.Context) error {
 
 	log.Info().Msgf("Video data: %v", videoData)
 
+	recipeData := &recipe.CreateRecipeData{
+		AudioURL:     videoData.AudioURL,
+		Source:       videoData.Source,
+		SourceID:     videoData.SourceID,
+		SourceIDType: videoData.SouurceIDType,
+	}
+
 	filePath, err := utils.DownloadFileFromURL(videoData.AudioURL)
 
 	if err != nil {
@@ -73,17 +81,22 @@ func (bs *botService) onTextMessage(c telebot.Context) error {
 		return err
 	}
 
-	recipeText, err := bs.openai.TextToFormattedRecipe(text, videoData.Description)
+	recipeTextData, err := bs.openai.TextToFormattedRecipe(text, videoData.Description)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to convert text to recipe")
 		return err
 	}
 
+	recipeData.Body = text
+	recipeData.RecipeMarkdownText = recipeTextData.Text
+	recipeData.Title = recipeTextData.Title
+
+	u := c.Get("user").(*entity.User)
+
 	r, err := bs.recipeService.CreateRecipe(
-		&recipe.CreateRecipeData{
-			RecipeMarkdownText: recipeText,
-		},
+		recipeData,
+		u.ID,
 	)
 
 	if err != nil {

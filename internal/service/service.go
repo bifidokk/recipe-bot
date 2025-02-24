@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/bifidokk/recipe-bot/internal/entity"
 	"github.com/bifidokk/recipe-bot/internal/service/api"
+	"github.com/bifidokk/recipe-bot/internal/service/api/openai"
 )
 
 type BotService interface {
@@ -11,7 +12,7 @@ type BotService interface {
 
 type OpenAIClient interface {
 	ConvertSpeechToText(inputFile string) (string, error)
-	TextToFormattedRecipe(speechText string, descriptionText string) (string, error)
+	TextToFormattedRecipe(speechText string, descriptionText string) (*openai.Recipe, error)
 }
 
 type TikHubClient interface {

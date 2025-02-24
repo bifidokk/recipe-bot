@@ -1,12 +1,14 @@
 package recipe
 
 import (
+	"context"
+
 	"github.com/bifidokk/recipe-bot/internal/entity"
 	"github.com/bifidokk/recipe-bot/internal/repository/recipe"
 )
 
 type Service interface {
-	CreateRecipe(recipe *CreateRecipeData) (*entity.Recipe, error)
+	CreateRecipe(recipe *CreateRecipeData, userID int) (*entity.Recipe, error)
 }
 
 type recipeService struct {
@@ -19,7 +21,36 @@ func NewRecipeService(recipeRepository *recipe.Repository) Service {
 	}
 }
 
-func (r recipeService) CreateRecipe(_ *CreateRecipeData) (*entity.Recipe, error) {
-	//TODO implement me
-	panic("implement me")
+func (r recipeService) CreateRecipe(recipeData *CreateRecipeData, userID int) (*entity.Recipe, error) {
+	rcp := &entity.Recipe{
+		UserID:             userID,
+		Title:              recipeData.Title,
+		Body:               recipeData.Body,
+		RecipeMarkdownText: recipeData.RecipeMarkdownText,
+		Source:             recipeData.Source,
+		SourceID:           recipeData.SourceID,
+		SourceIDType:       recipeData.SourceIDType,
+		AudioURL:           recipeData.AudioURL,
+	}
+
+	ctx := context.Background()
+	recipeID, err := r.recipeRepository.CreateRecipe(ctx, rcp)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return r.getRecipeByID(recipeID)
+}
+
+func (r recipeService) getRecipeByID(ID int) (*entity.Recipe, error) {
+	ctx := context.Background()
+
+	rcp, err := r.recipeRepository.FindByID(ctx, ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return rcp, nil
 }

@@ -19,16 +19,17 @@ type Repository struct {
 const (
 	tableName = "recipes"
 
-	idColumn         = "id"
-	titleColumn      = "title"
-	bodyColumn       = "body"
-	markdownColumn   = "markdown"
-	sourceColumn     = "source"
-	sourceLinkColumn = "source_link"
-	audioLinkColumn  = "audio_link"
-	userIDColumn     = "user_id"
-	createdAtColumn  = "created_at"
-	updatedAtColumn  = "updated_at"
+	idColumn           = "id"
+	titleColumn        = "title"
+	bodyColumn         = "body"
+	markdownColumn     = "markdown"
+	sourceColumn       = "source"
+	sourceIDColumn     = "source_id"
+	sourceIDTypeColumn = "source_id_type"
+	audioURLColumn     = "audio_url"
+	userIDColumn       = "user_id"
+	createdAtColumn    = "created_at"
+	updatedAtColumn    = "updated_at"
 )
 
 func NewRecipeRepository(db *client.DBClient) *Repository {
@@ -40,8 +41,8 @@ func NewRecipeRepository(db *client.DBClient) *Repository {
 
 func (r *Repository) CreateRecipe(ctx context.Context, recipe *entity.Recipe) (int, error) {
 	query, args, err := r.sqlBuilder.Insert(tableName).
-		Columns(titleColumn, bodyColumn, markdownColumn, sourceColumn, sourceLinkColumn, audioLinkColumn, userIDColumn).
-		Values(recipe.Title, recipe.Body, recipe.RecipeMarkdownText, recipe.Source, recipe.SourceLink, recipe.AudioLink, recipe.UserID).
+		Columns(titleColumn, bodyColumn, markdownColumn, sourceColumn, sourceIDColumn, sourceIDTypeColumn, audioURLColumn, userIDColumn).
+		Values(recipe.Title, recipe.Body, recipe.RecipeMarkdownText, recipe.Source, recipe.SourceID, recipe.SourceIDType, recipe.AudioURL, recipe.UserID).
 		Suffix("RETURNING id").
 		ToSql()
 
@@ -57,4 +58,27 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *entity.Recipe) (i
 	}
 
 	return recipeID, nil
+}
+
+func (r *Repository) FindByID(ctx context.Context, id int) (*entity.Recipe, error) {
+	var recipe entity.Recipe
+	query, args, err := r.sqlBuilder.Select(
+		idColumn, titleColumn, bodyColumn, markdownColumn, sourceColumn, sourceIDColumn, sourceIDTypeColumn, audioURLColumn, userIDColumn, createdAtColumn, updatedAtColumn,
+	).
+		From(tableName).
+		Where(sq.Eq{idColumn: id}).
+		ToSql()
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to build query")
+		return nil, err
+	}
+
+	err = pgxscan.Get(ctx, r.db.Pool, &recipe, query, args...)
+	if err != nil {
+		log.Info().Msgf("could not find recipe id %d", id)
+		return nil, fmt.Errorf("failed to fetch recipe by ID: %w", err)
+	}
+
+	return &recipe, nil
 }

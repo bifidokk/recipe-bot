@@ -38,18 +38,31 @@ func (t *videoService) GetVideoData(message string) (*api.VideoData, error) {
 		return nil, err
 	}
 
+	var videoData *api.VideoData
+
 	switch videoIdentificator.source {
 	case TikTok:
 		if videoIdentificator.idType == SharedURL {
-			return t.tikhub.GetVideoDataBySharedURL(videoIdentificator.id)
+			videoData, err = t.tikhub.GetVideoDataBySharedURL(videoIdentificator.id)
 		}
 
 		if videoIdentificator.idType == VideoID {
-			return t.tikhub.GetVideoDataByVideoID(videoIdentificator.id)
+			videoData, err = t.tikhub.GetVideoDataByVideoID(videoIdentificator.id)
 		}
+
+	default:
+		return nil, errors.New("unknown source")
 	}
 
-	return nil, errors.New("invalid source")
+	if err != nil {
+		return nil, err
+	}
+
+	videoData.Source = videoIdentificator.source
+	videoData.SourceID = videoIdentificator.id
+	videoData.SouurceIDType = videoIdentificator.idType
+
+	return videoData, nil
 }
 
 func (t *videoService) extractVideoIdentification(message string) (*videoIdentification, error) {

@@ -8,8 +8,9 @@ type Recipe struct {
 	Body               string    `db:"body"`
 	RecipeMarkdownText string    `db:"markdown"`
 	Source             string    `db:"source"`
-	SourceLink         string    `db:"source_link"`
-	AudioLink          string    `db:"audio_link"`
+	SourceID           string    `db:"source_id"`
+	SourceIDType       string    `db:"source_id_type"`
+	AudioURL           string    `db:"audio_url"`
 	UserID             int       `db:"user_id"`
 	CreatedAt          time.Time `db:"created_at"`
 	UpdatedAt          time.Time `db:"updated_at"`
