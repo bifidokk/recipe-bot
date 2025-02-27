@@ -8,4 +8,5 @@ type CreateRecipeData struct {
 	SourceIDType       string
 	AudioURL           string
 	RecipeMarkdownText string
+	ShareURL           string
 }

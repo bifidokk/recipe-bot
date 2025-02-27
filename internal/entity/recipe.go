@@ -11,6 +11,7 @@ type Recipe struct {
 	SourceID           string    `db:"source_id"`
 	SourceIDType       string    `db:"source_id_type"`
 	AudioURL           string    `db:"audio_url"`
+	ShareURL           string    `db:"share_url"`
 	UserID             int       `db:"user_id"`
 	CreatedAt          time.Time `db:"created_at"`
 	UpdatedAt          time.Time `db:"updated_at"`

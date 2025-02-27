@@ -23,6 +23,13 @@ type VideoDataResponse struct {
 			OriginalClientText struct {
 				MarkupText string `json:"markup_text"`
 			} `json:"original_client_text"`
+			Video struct {
+				AIDynamicCover struct {
+					URI     string   `json:"uri"`
+					URLList []string `json:"url_list"`
+				} `json:"ai_dynamic_cover"`
+			} `json:"video"`
+			ShareURL string `json:"share_url"`
 		} `json:"aweme_details"`
 	} `json:"data"`
 }
@@ -58,6 +65,8 @@ func (t *Client) GetVideoDataBySharedURL(sharedURL string) (*api.VideoData, erro
 	return &api.VideoData{
 		AudioURL:    videoDataResponse.Data.AwemeDetails[0].Music.PlayURL.URI,
 		Description: videoDataResponse.Data.AwemeDetails[0].OriginalClientText.MarkupText,
+		ShareURL:    videoDataResponse.Data.AwemeDetails[0].ShareURL,
+		CoverURL:    videoDataResponse.Data.AwemeDetails[0].Video.AIDynamicCover.URLList[0],
 	}, nil
 }
 
@@ -78,6 +87,8 @@ func (t *Client) GetVideoDataByVideoID(videoID string) (*api.VideoData, error) {
 	return &api.VideoData{
 		AudioURL:    videoDataResponse.Data.AwemeDetails[0].Music.PlayURL.URI,
 		Description: videoDataResponse.Data.AwemeDetails[0].OriginalClientText.MarkupText,
+		ShareURL:    videoDataResponse.Data.AwemeDetails[0].ShareURL,
+		CoverURL:    videoDataResponse.Data.AwemeDetails[0].Video.AIDynamicCover.URLList[0],
 	}, nil
 
 }

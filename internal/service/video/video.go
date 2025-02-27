@@ -6,6 +6,7 @@ import (
 
 	"github.com/bifidokk/recipe-bot/internal/service"
 	"github.com/bifidokk/recipe-bot/internal/service/api"
+	"github.com/rs/zerolog/log"
 )
 
 const SharedURL = "shared_url"
@@ -60,7 +61,9 @@ func (t *videoService) GetVideoData(message string) (*api.VideoData, error) {
 
 	videoData.Source = videoIdentificator.source
 	videoData.SourceID = videoIdentificator.id
-	videoData.SouurceIDType = videoIdentificator.idType
+	videoData.SourceIDType = videoIdentificator.idType
+
+	log.Info().Msgf("Video data: %v", videoData)
 
 	return videoData, nil
 }

@@ -64,7 +64,8 @@ func (bs *botService) onTextMessage(c telebot.Context) error {
 		AudioURL:     videoData.AudioURL,
 		Source:       videoData.Source,
 		SourceID:     videoData.SourceID,
-		SourceIDType: videoData.SouurceIDType,
+		SourceIDType: videoData.SourceIDType,
+		ShareURL:     videoData.ShareURL,
 	}
 
 	filePath, err := utils.DownloadFileFromURL(videoData.AudioURL)

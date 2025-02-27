@@ -31,6 +31,7 @@ func (r recipeService) CreateRecipe(recipeData *CreateRecipeData, userID int) (*
 		SourceID:           recipeData.SourceID,
 		SourceIDType:       recipeData.SourceIDType,
 		AudioURL:           recipeData.AudioURL,
+		ShareURL:           recipeData.ShareURL,
 	}
 
 	ctx := context.Background()
