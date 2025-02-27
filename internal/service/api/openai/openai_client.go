@@ -32,6 +32,9 @@ List of ingredients.
 Cooking process description.
 ###
 
+The List of ingredients in recipe text should be formatted as list. Blocks in recipe text should be divided by blank line.
+The cooking process description should be formatted and divided by steps.
+
 Answer using a language from input messages
 Message1:
 ###
