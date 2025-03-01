@@ -3,6 +3,7 @@ package recipe
 import (
 	"context"
 	"fmt"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/bifidokk/recipe-bot/internal/client"
@@ -29,6 +30,7 @@ const (
 	audioURLColumn     = "audio_url"
 	shareURLColumn     = "share_url"
 	userIDColumn       = "user_id"
+	coverFileIDColumn  = "cover_file_id"
 	createdAtColumn    = "created_at"
 	updatedAtColumn    = "updated_at"
 )
@@ -51,6 +53,7 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *entity.Recipe) (i
 			sourceIDTypeColumn,
 			audioURLColumn,
 			shareURLColumn,
+			coverFileIDColumn,
 			userIDColumn,
 		).
 		Values(
@@ -62,6 +65,7 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *entity.Recipe) (i
 			recipe.SourceIDType,
 			recipe.AudioURL,
 			recipe.ShareURL,
+			recipe.CoverFileID,
 			recipe.UserID,
 		).
 		Suffix("RETURNING id").
@@ -94,6 +98,7 @@ func (r *Repository) FindByID(ctx context.Context, id int) (*entity.Recipe, erro
 		audioURLColumn,
 		shareURLColumn,
 		userIDColumn,
+		coverFileIDColumn,
 		createdAtColumn,
 		updatedAtColumn,
 	).
@@ -113,4 +118,40 @@ func (r *Repository) FindByID(ctx context.Context, id int) (*entity.Recipe, erro
 	}
 
 	return &recipe, nil
+}
+
+func (r *Repository) UpdateRecipe(ctx context.Context, recipe *entity.Recipe) error {
+	updates := map[string]interface{}{
+		titleColumn:        recipe.Title,
+		bodyColumn:         recipe.Body,
+		markdownColumn:     recipe.RecipeMarkdownText,
+		sourceColumn:       recipe.Source,
+		sourceIDColumn:     recipe.SourceID,
+		sourceIDTypeColumn: recipe.SourceIDType,
+		audioURLColumn:     recipe.AudioURL,
+		shareURLColumn:     recipe.ShareURL,
+		coverFileIDColumn:  recipe.CoverFileID,
+		userIDColumn:       recipe.UserID,
+	}
+
+	updateBuilder := r.sqlBuilder.Update(tableName).Where("id = ?", recipe.ID)
+
+	for column, value := range updates {
+		updateBuilder = updateBuilder.Set(column, value)
+	}
+
+	updateBuilder = updateBuilder.Set("updated_at", time.Now())
+
+	query, args, err := updateBuilder.ToSql()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to build update query")
+		return err
+	}
+
+	_, err = r.db.Pool.Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to update recipe: %w", err)
+	}
+
+	return nil
 }

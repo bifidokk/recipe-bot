@@ -9,6 +9,7 @@ import (
 
 type Service interface {
 	CreateRecipe(recipe *CreateRecipeData, userID int) (*entity.Recipe, error)
+	UpdateRecipe(recipe *entity.Recipe) error
 }
 
 type recipeService struct {
@@ -42,6 +43,17 @@ func (r recipeService) CreateRecipe(recipeData *CreateRecipeData, userID int) (*
 	}
 
 	return r.getRecipeByID(recipeID)
+}
+
+func (r recipeService) UpdateRecipe(recipe *entity.Recipe) error {
+	ctx := context.Background()
+	err := r.recipeRepository.UpdateRecipe(ctx, recipe)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r recipeService) getRecipeByID(ID int) (*entity.Recipe, error) {

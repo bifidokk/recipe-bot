@@ -105,6 +105,20 @@ func (bs *botService) onTextMessage(c telebot.Context) error {
 		return err
 	}
 
+	if videoData.CoverURL != "" {
+		photo := &telebot.Photo{File: telebot.FromURL(videoData.CoverURL)}
+		photoResult, _ := bs.bot.Send(c.Sender(), photo)
+
+		if photoResult != nil {
+			r.CoverFileID = photoResult.Photo.FileID
+			err = bs.recipeService.UpdateRecipe(r)
+
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to update recipe")
+			}
+		}
+	}
+
 	_, err = bs.bot.Send(c.Sender(), r.RecipeMarkdownText)
 
 	if err != nil {
