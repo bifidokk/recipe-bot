@@ -29,9 +29,7 @@ func NewApp(ctx context.Context) (*App, error) {
 
 func (app *App) Run() error {
 	_ = app.serviceProvider.DB()
-	err := app.serviceProvider.BotService().Start()
-
-	return err
+	return app.serviceProvider.BotService().Start()
 }
 
 func (app *App) Shutdown() {
