@@ -2,6 +2,7 @@ package bot
 
 import (
 	"database/sql"
+
 	"github.com/bifidokk/recipe-bot/internal/entity"
 	"github.com/bifidokk/recipe-bot/internal/service"
 	"github.com/bifidokk/recipe-bot/internal/service/recipe"
@@ -84,20 +85,17 @@ func (bs *botService) onRecipesCommand(c telebot.Context) error {
 	log.Info().Msgf("/recipes command")
 
 	u := c.Get("user").(*entity.User)
-
 	recipes, err := bs.recipeService.GetRecipesByUserID(u.ID)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get recipes")
 
 		_, _ = bs.bot.Send(c.Sender(), "Sorry but I could not get your recipes")
-
 		return err
 	}
 
 	if len(recipes) == 0 {
 		_, _ = bs.bot.Send(c.Sender(), "You have no recipes yet")
-
 		return nil
 	}
 
