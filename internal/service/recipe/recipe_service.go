@@ -2,6 +2,7 @@ package recipe
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/bifidokk/recipe-bot/internal/entity"
 	"github.com/bifidokk/recipe-bot/internal/repository/recipe"
@@ -10,6 +11,7 @@ import (
 type Service interface {
 	CreateRecipe(recipe *CreateRecipeData, userID int) (*entity.Recipe, error)
 	UpdateRecipe(recipe *entity.Recipe) error
+	GetRecipesByUserID(userID int) ([]*entity.Recipe, error)
 }
 
 type recipeService struct {
@@ -32,7 +34,10 @@ func (r recipeService) CreateRecipe(recipeData *CreateRecipeData, userID int) (*
 		SourceID:           recipeData.SourceID,
 		SourceIDType:       recipeData.SourceIDType,
 		AudioURL:           recipeData.AudioURL,
-		ShareURL:           recipeData.ShareURL,
+	}
+
+	if recipeData.ShareURL != "" {
+		rcp.ShareURL = sql.NullString{String: recipeData.ShareURL, Valid: true}
 	}
 
 	ctx := context.Background()
@@ -54,6 +59,18 @@ func (r recipeService) UpdateRecipe(recipe *entity.Recipe) error {
 	}
 
 	return nil
+}
+
+func (r recipeService) GetRecipesByUserID(userID int) ([]*entity.Recipe, error) {
+	ctx := context.Background()
+
+	rcps, err := r.recipeRepository.FindByUserID(ctx, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return rcps, nil
 }
 
 func (r recipeService) getRecipeByID(ID int) (*entity.Recipe, error) {

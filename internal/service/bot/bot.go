@@ -1,12 +1,17 @@
 package bot
 
 import (
+	"database/sql"
 	"github.com/bifidokk/recipe-bot/internal/entity"
 	"github.com/bifidokk/recipe-bot/internal/service"
 	"github.com/bifidokk/recipe-bot/internal/service/recipe"
 	"github.com/bifidokk/recipe-bot/internal/service/utils"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/telebot.v4"
+)
+
+const (
+	startMenuText = "👨‍🍳 Hey there, food lover! Send me any TikTok recipe video and I'll instantly convert it into a clear, easy-to-follow recipe text. No more pausing or squinting at the screen! Just share the URL and let's start cooking! 🍽️"
 )
 
 type botService struct {
@@ -36,12 +41,80 @@ func NewBotService(
 func (bs *botService) Start() error {
 	log.Info().Msg("Starting bot")
 
+	err := bs.bot.SetCommands([]telebot.Command{
+		{Text: "menu", Description: "Show the menu"},
+		{Text: "recipes", Description: "Show your recipes"},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	bs.bot.Handle("/start", bs.onStartCommand)
+	bs.bot.Handle("/menu", bs.onStartCommand)
+	bs.bot.Handle("/recipes", bs.onRecipesCommand)
+
 	bs.bot.Handle(telebot.OnText, bs.onTextMessage)
 
 	log.Info().Msg("Bot started!")
 	go func() {
 		bs.bot.Start()
 	}()
+
+	return nil
+}
+
+func (bs *botService) onStartCommand(c telebot.Context) error {
+	log.Info().Msgf("/start command")
+
+	recipesBtn := telebot.Btn{
+		Text: "My Recipes",
+		Data: "recipes",
+	}
+
+	menu := &telebot.ReplyMarkup{}
+	menu.Inline(
+		menu.Row(recipesBtn),
+	)
+
+	return c.Send(startMenuText, menu)
+}
+
+func (bs *botService) onRecipesCommand(c telebot.Context) error {
+	log.Info().Msgf("/recipes command")
+
+	u := c.Get("user").(*entity.User)
+
+	recipes, err := bs.recipeService.GetRecipesByUserID(u.ID)
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get recipes")
+
+		_, _ = bs.bot.Send(c.Sender(), "Sorry but I could not get your recipes")
+
+		return err
+	}
+
+	if len(recipes) == 0 {
+		_, _ = bs.bot.Send(c.Sender(), "You have no recipes yet")
+
+		return nil
+	}
+
+	rcp := recipes[0]
+
+	_, err = bs.bot.Send(
+		c.Sender(),
+		rcp.GetRecipeMarkdownView(),
+		&telebot.SendOptions{
+			ParseMode: telebot.ModeMarkdownV2,
+		},
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to send message")
+		return err
+	}
 
 	return nil
 }
@@ -110,7 +183,7 @@ func (bs *botService) onTextMessage(c telebot.Context) error {
 		photoResult, _ := bs.bot.Send(c.Sender(), photo)
 
 		if photoResult != nil {
-			r.CoverFileID = photoResult.Photo.FileID
+			r.CoverFileID = sql.NullString{String: photoResult.Photo.FileID, Valid: true}
 			err = bs.recipeService.UpdateRecipe(r)
 
 			if err != nil {

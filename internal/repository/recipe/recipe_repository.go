@@ -155,3 +155,37 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *entity.Recipe) er
 
 	return nil
 }
+
+func (r *Repository) FindByUserID(ctx context.Context, userID int) ([]*entity.Recipe, error) {
+	var recipes []*entity.Recipe
+	query, args, err := r.sqlBuilder.Select(
+		idColumn,
+		titleColumn,
+		bodyColumn,
+		markdownColumn,
+		sourceColumn,
+		sourceIDColumn,
+		sourceIDTypeColumn,
+		audioURLColumn,
+		shareURLColumn,
+		userIDColumn,
+		coverFileIDColumn,
+		createdAtColumn,
+		updatedAtColumn,
+	).
+		From(tableName).
+		Where(sq.Eq{userIDColumn: userID}).
+		ToSql()
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to build query")
+		return nil, err
+	}
+
+	err = pgxscan.Select(ctx, r.db.Pool, &recipes, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch recipes by user ID: %w", err)
+	}
+
+	return recipes, nil
+}
