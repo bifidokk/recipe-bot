@@ -1,0 +1,119 @@
+package command
+
+import (
+	"database/sql"
+
+	"github.com/bifidokk/recipe-bot/internal/entity"
+	"github.com/bifidokk/recipe-bot/internal/service"
+	"github.com/bifidokk/recipe-bot/internal/service/recipe"
+	"github.com/bifidokk/recipe-bot/internal/service/utils"
+	"github.com/rs/zerolog/log"
+	"gopkg.in/telebot.v4"
+)
+
+type TextCommand struct {
+	openai        service.OpenAIClient
+	videoService  service.VideoService
+	recipeService recipe.Service
+}
+
+func NewTextCommand(
+	openai service.OpenAIClient,
+	videoService service.VideoService,
+	recipeService recipe.Service,
+) Command {
+	return &TextCommand{
+		openai:        openai,
+		videoService:  videoService,
+		recipeService: recipeService,
+	}
+}
+
+func (c *TextCommand) Name() string {
+	return "text"
+}
+
+func (c *TextCommand) Register(b *telebot.Bot) {
+	b.Handle(telebot.OnText, func(ctx telebot.Context) error {
+		log.Info().Msgf("Input text %v", ctx.Text())
+
+		videoData, err := c.videoService.GetVideoData(ctx.Text())
+
+		if err != nil {
+			_, err = b.Send(ctx.Sender(), "Sorry but I could not get video data from your message")
+
+			log.Error().Err(err)
+			return err
+		}
+
+		log.Info().Msgf("Video data: %v", videoData)
+
+		recipeData := &recipe.CreateRecipeData{
+			AudioURL:     videoData.AudioURL,
+			Source:       videoData.Source,
+			SourceID:     videoData.SourceID,
+			SourceIDType: videoData.SourceIDType,
+			ShareURL:     videoData.ShareURL,
+		}
+
+		filePath, err := utils.DownloadFileFromURL(videoData.AudioURL)
+
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to download video file")
+			return err
+		}
+
+		text, err := c.openai.ConvertSpeechToText(filePath)
+
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to convert speech to text")
+			return err
+		}
+
+		recipeTextData, err := c.openai.TextToFormattedRecipe(text, videoData.Description)
+
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to convert text to recipe")
+			return err
+		}
+
+		recipeData.Body = text
+		recipeData.RecipeMarkdownText = recipeTextData.Text
+		recipeData.Title = recipeTextData.Title
+
+		u := ctx.Get("user").(*entity.User)
+
+		r, err := c.recipeService.CreateRecipe(
+			recipeData,
+			u.ID,
+		)
+
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to create recipe")
+			return err
+		}
+
+		if videoData.CoverURL != "" {
+			photo := &telebot.Photo{File: telebot.FromURL(videoData.CoverURL)}
+			photoResult, _ := b.Send(ctx.Sender(), photo)
+
+			if photoResult != nil {
+				r.CoverFileID = sql.NullString{String: photoResult.Photo.FileID, Valid: true}
+				err = c.recipeService.UpdateRecipe(r)
+
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to update recipe")
+				}
+			}
+		}
+
+		_, err = b.Send(ctx.Sender(), r.RecipeMarkdownText)
+
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send message")
+			return err
+		}
+
+		return nil
+	})
+}

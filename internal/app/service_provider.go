@@ -19,6 +19,7 @@ import (
 	"github.com/bifidokk/recipe-bot/internal/service/api/openai"
 	"github.com/bifidokk/recipe-bot/internal/service/api/tikhub"
 	botService "github.com/bifidokk/recipe-bot/internal/service/bot"
+	"github.com/bifidokk/recipe-bot/internal/service/command"
 	"github.com/bifidokk/recipe-bot/internal/service/video"
 	"github.com/rs/zerolog/log"
 	tb "gopkg.in/telebot.v4"
@@ -41,6 +42,8 @@ type serviceProvider struct {
 
 	userRepository   *userRepo.Repository
 	recipeRepository *recipeRepo.Repository
+
+	botCommands []command.Command
 }
 
 func newServiceProvider() *serviceProvider {
@@ -136,14 +139,27 @@ func (sp *serviceProvider) BotService() service.BotService {
 
 		sp.botService = botService.NewBotService(
 			bot,
-			sp.TikTokAPIConfig().Token(),
-			sp.OpenAIClient(),
-			sp.VideoService(),
-			sp.RecipeService(),
+			sp.BotCommands(),
 		)
 	}
 
 	return sp.botService
+}
+
+func (sp *serviceProvider) BotCommands() []command.Command {
+	if sp.botCommands == nil {
+		sp.botCommands = []command.Command{
+			command.NewStartCommand(),
+			command.NewUserRecipesCommand(sp.RecipeService()),
+			command.NewTextCommand(
+				sp.OpenAIClient(),
+				sp.VideoService(),
+				sp.RecipeService(),
+			),
+		}
+	}
+
+	return sp.botCommands
 }
 
 func (sp *serviceProvider) OpenAIClient() service.OpenAIClient {
