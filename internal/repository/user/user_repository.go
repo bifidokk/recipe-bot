@@ -17,15 +17,45 @@ type Repository struct {
 	sqlBuilder sq.StatementBuilderType
 }
 
+type columns struct {
+	id        string
+	name      string
+	tgID      string
+	language  string
+	createdAt string
+	updatedAt string
+}
+
+var cols = columns{
+	id:        "id",
+	name:      "name",
+	tgID:      "telegram_id",
+	language:  "language_code",
+	createdAt: "created_at",
+	updatedAt: "updated_at",
+}
+
+func (c columns) all() []string {
+	return []string{
+		c.id,
+		c.name,
+		c.tgID,
+		c.language,
+		c.createdAt,
+		c.updatedAt,
+	}
+}
+
+func (c columns) forInsert() []string {
+	return []string{
+		c.name,
+		c.tgID,
+		c.language,
+	}
+}
+
 const (
 	tableName = "users"
-
-	idColumn        = "id"
-	nameColumn      = "name"
-	tgIDColumn      = "telegram_id"
-	languageColumn  = "language_code"
-	createdAtColumn = "created_at"
-	updatedAtColumn = "updated_at"
 )
 
 func NewUserRepository(dbClient *client.DBClient) *Repository {
@@ -38,10 +68,10 @@ func NewUserRepository(dbClient *client.DBClient) *Repository {
 func (r *Repository) FindByTelegramID(ctx context.Context, id int64) (*entity.User, error) {
 	var user entity.User
 	query, args, err := r.sqlBuilder.Select(
-		idColumn, nameColumn, tgIDColumn, languageColumn, createdAtColumn, updatedAtColumn,
+		cols.all()...,
 	).
 		From(tableName).
-		Where(sq.Eq{tgIDColumn: strconv.Itoa(int(id))}).
+		Where(sq.Eq{cols.tgID: strconv.Itoa(int(id))}).
 		ToSql()
 
 	if err != nil {
@@ -61,10 +91,10 @@ func (r *Repository) FindByTelegramID(ctx context.Context, id int64) (*entity.Us
 func (r *Repository) FindByID(ctx context.Context, id int) (*entity.User, error) {
 	var user entity.User
 	query, args, err := r.sqlBuilder.Select(
-		idColumn, nameColumn, tgIDColumn, languageColumn, createdAtColumn, updatedAtColumn,
+		cols.all()...,
 	).
 		From(tableName).
-		Where(sq.Eq{idColumn: id}).
+		Where(sq.Eq{cols.id: id}).
 		ToSql()
 
 	if err != nil {
@@ -83,7 +113,7 @@ func (r *Repository) FindByID(ctx context.Context, id int) (*entity.User, error)
 
 func (r *Repository) CreateUser(ctx context.Context, user *entity.User) (int, error) {
 	query, args, err := r.sqlBuilder.Insert(tableName).
-		Columns(nameColumn, tgIDColumn, languageColumn).
+		Columns(cols.forInsert()...).
 		Values(user.Name, user.TelegramID, user.Language).
 		Suffix("RETURNING id").
 		ToSql()
