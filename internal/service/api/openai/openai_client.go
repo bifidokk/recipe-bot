@@ -24,7 +24,7 @@ Create a recipe title and text in the JSON format. Return raw JSON without forma
 }
 ###
 
-The first element with key "title" - just create a small title for the recipe, not more that 255 symbols.
+The first element with key "title" - just create a small title for the recipe, not more that 255 symbols. Also add an emoji to the start of a title accordingly.
 The second element with key "text" - recipe text in format:
 ###
 Name of dish.
