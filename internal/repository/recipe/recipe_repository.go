@@ -19,21 +19,72 @@ type Repository struct {
 
 const (
 	tableName = "recipes"
-
-	idColumn           = "id"
-	titleColumn        = "title"
-	bodyColumn         = "body"
-	markdownColumn     = "markdown"
-	sourceColumn       = "source"
-	sourceIDColumn     = "source_id"
-	sourceIDTypeColumn = "source_id_type"
-	audioURLColumn     = "audio_url"
-	shareURLColumn     = "share_url"
-	userIDColumn       = "user_id"
-	coverFileIDColumn  = "cover_file_id"
-	createdAtColumn    = "created_at"
-	updatedAtColumn    = "updated_at"
 )
+
+type columns struct {
+	id           string
+	title        string
+	body         string
+	markdown     string
+	source       string
+	sourceID     string
+	sourceIDType string
+	audioURL     string
+	shareURL     string
+	userID       string
+	coverFileID  string
+	createdAt    string
+	updatedAt    string
+}
+
+var cols = columns{
+	id:           "id",
+	title:        "title",
+	body:         "body",
+	markdown:     "markdown",
+	source:       "source",
+	sourceID:     "source_id",
+	sourceIDType: "source_id_type",
+	audioURL:     "audio_url",
+	shareURL:     "share_url",
+	userID:       "user_id",
+	coverFileID:  "cover_file_id",
+	createdAt:    "created_at",
+	updatedAt:    "updated_at",
+}
+
+func (c columns) all() []string {
+	return []string{
+		c.id,
+		c.title,
+		c.body,
+		c.markdown,
+		c.source,
+		c.sourceID,
+		c.sourceIDType,
+		c.audioURL,
+		c.shareURL,
+		c.userID,
+		c.coverFileID,
+		c.createdAt,
+		c.updatedAt,
+	}
+}
+
+func (c columns) forInsert() []string {
+	return []string{
+		c.title,
+		c.body,
+		c.markdown,
+		c.source,
+		c.sourceID,
+		c.sourceIDType,
+		c.audioURL,
+		c.shareURL,
+		c.coverFileID,
+		c.userID,
+	}
+}
 
 func NewRecipeRepository(db *client.DBClient) *Repository {
 	return &Repository{
@@ -44,18 +95,7 @@ func NewRecipeRepository(db *client.DBClient) *Repository {
 
 func (r *Repository) CreateRecipe(ctx context.Context, recipe *entity.Recipe) (int, error) {
 	query, args, err := r.sqlBuilder.Insert(tableName).
-		Columns(
-			titleColumn,
-			bodyColumn,
-			markdownColumn,
-			sourceColumn,
-			sourceIDColumn,
-			sourceIDTypeColumn,
-			audioURLColumn,
-			shareURLColumn,
-			coverFileIDColumn,
-			userIDColumn,
-		).
+		Columns(cols.forInsert()...).
 		Values(
 			recipe.Title,
 			recipe.Body,
@@ -87,23 +127,9 @@ func (r *Repository) CreateRecipe(ctx context.Context, recipe *entity.Recipe) (i
 
 func (r *Repository) FindByID(ctx context.Context, id int) (*entity.Recipe, error) {
 	var recipe entity.Recipe
-	query, args, err := r.sqlBuilder.Select(
-		idColumn,
-		titleColumn,
-		bodyColumn,
-		markdownColumn,
-		sourceColumn,
-		sourceIDColumn,
-		sourceIDTypeColumn,
-		audioURLColumn,
-		shareURLColumn,
-		userIDColumn,
-		coverFileIDColumn,
-		createdAtColumn,
-		updatedAtColumn,
-	).
+	query, args, err := r.sqlBuilder.Select(cols.all()...).
 		From(tableName).
-		Where(sq.Eq{idColumn: id}).
+		Where(sq.Eq{cols.id: id}).
 		ToSql()
 
 	if err != nil {
@@ -122,16 +148,16 @@ func (r *Repository) FindByID(ctx context.Context, id int) (*entity.Recipe, erro
 
 func (r *Repository) UpdateRecipe(ctx context.Context, recipe *entity.Recipe) error {
 	updates := map[string]interface{}{
-		titleColumn:        recipe.Title,
-		bodyColumn:         recipe.Body,
-		markdownColumn:     recipe.RecipeMarkdownText,
-		sourceColumn:       recipe.Source,
-		sourceIDColumn:     recipe.SourceID,
-		sourceIDTypeColumn: recipe.SourceIDType,
-		audioURLColumn:     recipe.AudioURL,
-		shareURLColumn:     recipe.ShareURL,
-		coverFileIDColumn:  recipe.CoverFileID,
-		userIDColumn:       recipe.UserID,
+		cols.title:        recipe.Title,
+		cols.body:         recipe.Body,
+		cols.markdown:     recipe.RecipeMarkdownText,
+		cols.source:       recipe.Source,
+		cols.sourceID:     recipe.SourceID,
+		cols.sourceIDType: recipe.SourceIDType,
+		cols.audioURL:     recipe.AudioURL,
+		cols.shareURL:     recipe.ShareURL,
+		cols.coverFileID:  recipe.CoverFileID,
+		cols.userID:       recipe.UserID,
 	}
 
 	updateBuilder := r.sqlBuilder.Update(tableName).Where("id = ?", recipe.ID)
@@ -158,23 +184,9 @@ func (r *Repository) UpdateRecipe(ctx context.Context, recipe *entity.Recipe) er
 
 func (r *Repository) FindByUserID(ctx context.Context, userID int) ([]*entity.Recipe, error) {
 	var recipes []*entity.Recipe
-	query, args, err := r.sqlBuilder.Select(
-		idColumn,
-		titleColumn,
-		bodyColumn,
-		markdownColumn,
-		sourceColumn,
-		sourceIDColumn,
-		sourceIDTypeColumn,
-		audioURLColumn,
-		shareURLColumn,
-		userIDColumn,
-		coverFileIDColumn,
-		createdAtColumn,
-		updatedAtColumn,
-	).
+	query, args, err := r.sqlBuilder.Select(cols.all()...).
 		From(tableName).
-		Where(sq.Eq{userIDColumn: userID}).
+		Where(sq.Eq{cols.userID: userID}).
 		ToSql()
 
 	if err != nil {
