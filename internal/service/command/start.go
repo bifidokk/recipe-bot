@@ -23,14 +23,10 @@ func (c *StartCommand) Register(b *telebot.Bot) {
 	b.Handle("/start", func(ctx telebot.Context) error {
 		log.Info().Msgf("/start command")
 
-		recipesBtn := telebot.Btn{
-			Text: "My Recipes",
-			Data: "recipes",
-		}
-
 		menu := &telebot.ReplyMarkup{}
+		btnRecipes := menu.Data("My recipes", "user_recipes")
 		menu.Inline(
-			menu.Row(recipesBtn),
+			menu.Row(btnRecipes),
 		)
 
 		return ctx.Send(startMenuText, menu)
