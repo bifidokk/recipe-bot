@@ -156,6 +156,7 @@ func (sp *serviceProvider) BotCommands() []command.Command {
 				sp.VideoService(),
 				sp.RecipeService(),
 			),
+			command.NewUserRecipeDetailsCommand(sp.RecipeService()),
 		}
 	}
 

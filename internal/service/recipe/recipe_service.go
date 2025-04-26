@@ -3,6 +3,7 @@ package recipe
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/bifidokk/recipe-bot/internal/entity"
 	"github.com/bifidokk/recipe-bot/internal/repository/recipe"
@@ -12,6 +13,7 @@ type Service interface {
 	CreateRecipe(recipe *CreateRecipeData, userID int) (*entity.Recipe, error)
 	UpdateRecipe(recipe *entity.Recipe) error
 	GetRecipesByUserID(userID int) ([]*entity.Recipe, error)
+	GetRecipeDetailsByIDForUser(recipeID int, userID int) (*entity.Recipe, error)
 }
 
 type recipeService struct {
@@ -71,6 +73,19 @@ func (r recipeService) GetRecipesByUserID(userID int) ([]*entity.Recipe, error) 
 	}
 
 	return rcps, nil
+}
+
+func (r recipeService) GetRecipeDetailsByIDForUser(recipeID int, userID int) (*entity.Recipe, error) {
+	rcp, err := r.getRecipeByID(recipeID)
+	if err != nil {
+		return nil, err
+	}
+
+	if rcp.UserID != userID {
+		return nil, errors.New("user does not have access to this recipe")
+	}
+
+	return rcp, nil
 }
 
 func (r recipeService) getRecipeByID(ID int) (*entity.Recipe, error) {
