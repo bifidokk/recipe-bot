@@ -1,11 +1,12 @@
 package command
 
 import (
+	"strconv"
+
 	"github.com/bifidokk/recipe-bot/internal/entity"
 	"github.com/bifidokk/recipe-bot/internal/service/recipe"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/telebot.v4"
-	"strconv"
 )
 
 type UserRecipeDetailsCommand struct {
@@ -46,7 +47,7 @@ func (c *UserRecipeDetailsCommand) getUserRecipeDetails(ctx telebot.Context) err
 	rcp, err := c.recipeService.GetRecipeDetailsByIDForUser(recipeID, u.ID)
 	if err != nil {
 		log.Error().Msgf("Failed to get recipe details for user %v %v", u.ID, err)
-		ctx.Send("Sorry but I could not get recipe details")
+		_ = ctx.Send("Sorry but I could not get recipe details")
 		return nil
 	}
 
@@ -56,7 +57,7 @@ func (c *UserRecipeDetailsCommand) getUserRecipeDetails(ctx telebot.Context) err
 		menu.Row(btnRecipes),
 	)
 
-	ctx.Send(rcp.GetRecipeMarkdownView(), menu, &telebot.SendOptions{
+	_ = ctx.Send(rcp.GetRecipeMarkdownView(), menu, &telebot.SendOptions{
 		ParseMode:   telebot.ModeMarkdownV2,
 		ReplyMarkup: menu,
 	})
