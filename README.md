@@ -5,9 +5,9 @@
 ## ✨ Features
 
 - 🎥 **Video Detection**: Automatically detects video links in your messages.
-- 🗣️ **Speech-to-Text Conversion**: Converts video audio into text using OpenAI’s advanced technology.
+- 🗣️ **Speech-to-Text Conversion**: Converts video audio into text using OpenAI.
 - 📜 **Recipe Generation**: Creates stunning recipes with titles, bodies, and markdown formatting.
-- 📂 **Recipe Storage**: Saves recipes with metadata like cover images for easy access.
+- 📂 **Recipe Storage**: Saves recipes with metadata for easy access.
 
 ## 🛠️ How It Works
 
@@ -18,6 +18,7 @@
    - Converts the audio to text. 
    - Processes the text to generate a recipe. 
 4.  The recipe is sent back to you in a beautifully formatted markdown style.
+
 ## 🔑 Prerequisites
 
 - 🐹 **Go**: Version 1.23 or higher.
