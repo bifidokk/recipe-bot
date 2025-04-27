@@ -1,6 +1,6 @@
 # 🍳 Recipe Bot
 
-**Recipe Bot** is a Telegram bot that transforms your video content into beautifully formatted recipes using the magic of OpenAI! 🚀 It’s your ultimate kitchen assistant, making recipe creation seamless and fun. 🎉
+**Recipe Bot** is a Telegram bot that transforms your video content into beautifully formatted recipes using  OpenAI! 🚀 It’s your ultimate kitchen assistant, making recipe creation seamless and fun. 🎉
 
 ## ✨ Features
 
