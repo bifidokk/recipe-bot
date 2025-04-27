@@ -15,17 +15,20 @@ type TextCommand struct {
 	openai        service.OpenAIClient
 	videoService  service.VideoService
 	recipeService recipe.Service
+	userService   service.UserService
 }
 
 func NewTextCommand(
 	openai service.OpenAIClient,
 	videoService service.VideoService,
 	recipeService recipe.Service,
+	userService service.UserService,
 ) Command {
 	return &TextCommand{
 		openai:        openai,
 		videoService:  videoService,
 		recipeService: recipeService,
+		userService:   userService,
 	}
 }
 
@@ -36,6 +39,27 @@ func (c *TextCommand) Name() string {
 func (c *TextCommand) Register(b *telebot.Bot) {
 	b.Handle(telebot.OnText, func(ctx telebot.Context) error {
 		log.Info().Msgf("Input text %v", ctx.Text())
+
+		if !c.videoService.HasVideo(ctx.Text()) {
+			_, err := b.Send(ctx.Sender(), "Sorry but I could not find video in your message")
+
+			log.Error().Err(err)
+			return err
+		}
+
+		u := ctx.Get("user").(*entity.User)
+
+		if u.RecipeLimit <= 0 {
+			_, err := b.Send(ctx.Sender(), "Sorry, you have run out of available recipes. Please check your recipe limit.")
+
+			log.Error().Err(err)
+			return err
+		}
+
+		err := c.userService.DecreaseUserLimit(u)
+		if err != nil {
+			return err
+		}
 
 		videoData, err := c.videoService.GetVideoData(ctx.Text())
 
@@ -80,8 +104,6 @@ func (c *TextCommand) Register(b *telebot.Bot) {
 		recipeData.Body = text
 		recipeData.RecipeMarkdownText = recipeTextData.Text
 		recipeData.Title = recipeTextData.Title
-
-		u := ctx.Get("user").(*entity.User)
 
 		r, err := c.recipeService.CreateRecipe(
 			recipeData,

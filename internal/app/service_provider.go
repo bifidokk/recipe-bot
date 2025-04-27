@@ -155,6 +155,7 @@ func (sp *serviceProvider) BotCommands() []command.Command {
 				sp.OpenAIClient(),
 				sp.VideoService(),
 				sp.RecipeService(),
+				sp.UserService(),
 			),
 			command.NewUserRecipeDetailsCommand(sp.RecipeService()),
 		}

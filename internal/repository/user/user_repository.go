@@ -135,3 +135,29 @@ func (r *Repository) CreateUser(ctx context.Context, user *entity.User) (int, er
 
 	return userID, nil
 }
+
+func (r *Repository) UpdateUser(ctx context.Context, user *entity.User) error {
+	updates := map[string]interface{}{
+		cols.name:        user.Name,
+		cols.recipeLimit: user.RecipeLimit,
+	}
+
+	updateBuilder := r.sqlBuilder.Update(tableName).Where("id = ?", user.ID)
+
+	for column, value := range updates {
+		updateBuilder = updateBuilder.Set(column, value)
+	}
+
+	query, args, err := updateBuilder.ToSql()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to build update query")
+		return err
+	}
+
+	_, err = r.db.Pool.Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to update recipe: %w", err)
+	}
+
+	return nil
+}

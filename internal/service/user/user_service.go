@@ -60,3 +60,20 @@ func (u userService) CreateUser(user *entity.User) (*entity.User, error) {
 
 	return u.getUserByID(userID)
 }
+
+func (u userService) DecreaseUserLimit(user *entity.User) error {
+	user.RecipeLimit--
+
+	if user.RecipeLimit < 0 {
+		return nil
+	}
+
+	ctx := context.Background()
+	err := u.userRepository.UpdateUser(ctx, user)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

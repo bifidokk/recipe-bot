@@ -22,9 +22,11 @@ type TikHubClient interface {
 
 type VideoService interface {
 	GetVideoData(message string) (*api.VideoData, error)
+	HasVideo(message string) bool
 }
 
 type UserService interface {
 	GetUserByTelegramID(ID int64) (*entity.User, error)
 	CreateUser(user *entity.User) (*entity.User, error)
+	DecreaseUserLimit(user *entity.User) error
 }

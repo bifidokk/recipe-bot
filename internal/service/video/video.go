@@ -32,6 +32,12 @@ func NewVideoService(
 	}
 }
 
+func (t *videoService) HasVideo(message string) bool {
+	_, err := t.extractVideoIdentification(message)
+
+	return err == nil
+}
+
 func (t *videoService) GetVideoData(message string) (*api.VideoData, error) {
 	videoIdentificator, err := t.extractVideoIdentification(message)
 
