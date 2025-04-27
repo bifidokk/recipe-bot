@@ -2,12 +2,11 @@ package user
 
 import (
 	"context"
-	"github.com/bifidokk/recipe-bot/internal/repository/user"
-
-	"github.com/rs/zerolog/log"
 
 	"github.com/bifidokk/recipe-bot/internal/entity"
+	"github.com/bifidokk/recipe-bot/internal/repository/user"
 	"github.com/bifidokk/recipe-bot/internal/service"
+	"github.com/rs/zerolog/log"
 )
 
 const recipeLimitForNewUser = 5
