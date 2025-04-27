@@ -18,21 +18,23 @@ type Repository struct {
 }
 
 type columns struct {
-	id        string
-	name      string
-	tgID      string
-	language  string
-	createdAt string
-	updatedAt string
+	id          string
+	name        string
+	tgID        string
+	language    string
+	recipeLimit string
+	createdAt   string
+	updatedAt   string
 }
 
 var cols = columns{
-	id:        "id",
-	name:      "name",
-	tgID:      "telegram_id",
-	language:  "language_code",
-	createdAt: "created_at",
-	updatedAt: "updated_at",
+	id:          "id",
+	name:        "name",
+	tgID:        "telegram_id",
+	language:    "language_code",
+	recipeLimit: "recipe_limit",
+	createdAt:   "created_at",
+	updatedAt:   "updated_at",
 }
 
 func (c columns) all() []string {
@@ -41,6 +43,7 @@ func (c columns) all() []string {
 		c.name,
 		c.tgID,
 		c.language,
+		c.recipeLimit,
 		c.createdAt,
 		c.updatedAt,
 	}
@@ -51,6 +54,7 @@ func (c columns) forInsert() []string {
 		c.name,
 		c.tgID,
 		c.language,
+		c.recipeLimit,
 	}
 }
 
@@ -114,7 +118,7 @@ func (r *Repository) FindByID(ctx context.Context, id int) (*entity.User, error)
 func (r *Repository) CreateUser(ctx context.Context, user *entity.User) (int, error) {
 	query, args, err := r.sqlBuilder.Insert(tableName).
 		Columns(cols.forInsert()...).
-		Values(user.Name, user.TelegramID, user.Language).
+		Values(user.Name, user.TelegramID, user.Language, user.RecipeLimit).
 		Suffix("RETURNING id").
 		ToSql()
 
