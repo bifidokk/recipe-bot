@@ -45,7 +45,7 @@ jobs:
           script_stop: true
           script: |
             cd /var/www/recipe-bot
-            git pull
+            git pull origin main
             docker image prune --all --force
             docker compose --file ./.docker/docker-compose.yml --env-file ./.docker/.env.prod pull
             docker compose --file ./.docker/docker-compose.yml --env-file ./.docker/.env.prod down
