@@ -34,10 +34,11 @@ services:
 
   migrations:
     container_name: migrations
+    entrypoint: []
     build:
       context: ../
       dockerfile: ./.docker/migrations/Dockerfile.dev
-    command: ["migrate", "apply", "--url", "${POSTGRES_MIGRATION_DSN}", "--dir", "file://migrations"]
+    command: ["goose", "up"]
     depends_on:
       postgres:
         condition: service_healthy

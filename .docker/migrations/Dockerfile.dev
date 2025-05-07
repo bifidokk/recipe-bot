@@ -1,3 +1,9 @@
-FROM arigaio/atlas:latest
+FROM golang:alpine
 
-COPY migrations /migrations
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
+
+COPY migrations/ /migrations/
+
+WORKDIR /
+
+ENTRYPOINT ["goose"]

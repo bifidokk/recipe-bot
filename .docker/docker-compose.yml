@@ -33,8 +33,9 @@ services:
 
   migrations:
     container_name: recipe_migrations
+    entrypoint: []
     image: bifidokk/recipe-bot-migrations:latest
-    command: ["migrate", "apply", "--url", "${POSTGRES_MIGRATION_DSN}", "--dir", "file://migrations"]
+    command: [ "goose", "up" ]
     depends_on:
       postgres:
         condition: service_healthy
