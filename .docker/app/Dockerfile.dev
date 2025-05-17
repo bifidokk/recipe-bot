@@ -7,8 +7,24 @@ COPY . ./
 
 RUN go build ./cmd/main.go
 
+FROM python:3.12-alpine as instaloader
+RUN pip install --no-cache-dir instaloader
+
 FROM alpine:latest
-RUN apk add --no-cache ca-certificates libc6-compat ffmpeg
+RUN apk add --no-cache \
+    ca-certificates \
+    libc6-compat \
+    ffmpeg \
+    python3 \
+    py3-pip \
+    py3-virtualenv
+
+# Create virtual environment and install instaloader in it
+RUN python3 -m venv /opt/venv \
+    && /opt/venv/bin/pip install --no-cache-dir instaloader
+
+# Ensure venv Python and instaloader are accessible
+ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 COPY --from=builder /app .
