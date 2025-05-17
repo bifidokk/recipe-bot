@@ -20,6 +20,10 @@ type TikHubClient interface {
 	GetVideoDataByVideoID(videoID string) (*api.VideoData, error)
 }
 
+type InstaloaderClient interface {
+	GetVideoDataBySharedURL(sharedURL string) (*api.VideoData, error)
+}
+
 type VideoService interface {
 	GetVideoData(message string) (*api.VideoData, error)
 	HasVideo(message string) bool

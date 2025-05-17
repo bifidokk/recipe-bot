@@ -16,6 +16,7 @@ import (
 
 	"github.com/bifidokk/recipe-bot/internal/config"
 	"github.com/bifidokk/recipe-bot/internal/service"
+	"github.com/bifidokk/recipe-bot/internal/service/api/instaloader"
 	"github.com/bifidokk/recipe-bot/internal/service/api/openai"
 	"github.com/bifidokk/recipe-bot/internal/service/api/tikhub"
 	botService "github.com/bifidokk/recipe-bot/internal/service/bot"
@@ -33,12 +34,13 @@ type serviceProvider struct {
 
 	db *client.DBClient
 
-	botService    service.BotService
-	openAIClient  service.OpenAIClient
-	tikhubClient  service.TikHubClient
-	videoService  service.VideoService
-	userService   service.UserService
-	recipeService recipe.Service
+	botService        service.BotService
+	openAIClient      service.OpenAIClient
+	tikhubClient      service.TikHubClient
+	instaloaderClient service.InstaloaderClient
+	videoService      service.VideoService
+	userService       service.UserService
+	recipeService     recipe.Service
 
 	userRepository   *userRepo.Repository
 	recipeRepository *recipeRepo.Repository
@@ -180,9 +182,20 @@ func (sp *serviceProvider) TikhubClient() service.TikHubClient {
 	return sp.tikhubClient
 }
 
+func (sp *serviceProvider) InstaloaderClient() service.InstaloaderClient {
+	if sp.instaloaderClient == nil {
+		sp.instaloaderClient = instaloader.NewInstaloaderClient()
+	}
+
+	return sp.instaloaderClient
+}
+
 func (sp *serviceProvider) VideoService() service.VideoService {
 	if sp.videoService == nil {
-		sp.videoService = video.NewVideoService(sp.TikhubClient())
+		sp.videoService = video.NewVideoService(
+			sp.TikhubClient(),
+			sp.InstaloaderClient(),
+		)
 	}
 
 	return sp.videoService

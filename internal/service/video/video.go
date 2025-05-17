@@ -13,9 +13,11 @@ const SharedURL = "shared_url"
 const VideoID = "video_id"
 
 const TikTok = "tiktok"
+const Instagram = "instagram"
 
 type videoService struct {
-	tikhub service.TikHubClient
+	tikhub      service.TikHubClient
+	instaloader service.InstaloaderClient
 }
 
 type videoIdentification struct {
@@ -26,9 +28,11 @@ type videoIdentification struct {
 
 func NewVideoService(
 	tikhub service.TikHubClient,
+	instaloader service.InstaloaderClient,
 ) service.VideoService {
 	return &videoService{
 		tikhub,
+		instaloader,
 	}
 }
 
@@ -56,6 +60,8 @@ func (t *videoService) GetVideoData(message string) (*api.VideoData, error) {
 		if videoIdentificator.idType == VideoID {
 			videoData, err = t.tikhub.GetVideoDataByVideoID(videoIdentificator.id)
 		}
+	case Instagram:
+		videoData, err = t.instaloader.GetVideoDataBySharedURL(videoIdentificator.id)
 
 	default:
 		return nil, errors.New("unknown source")
@@ -95,13 +101,29 @@ func (t *videoService) extractVideoIdentification(message string) (*videoIdentif
 		}, nil
 	}
 
+	id = extractInstagramVideoID(message)
+
+	if len(id) > 0 {
+		return &videoIdentification{
+			id:     id,
+			idType: SharedURL,
+			source: Instagram,
+		}, nil
+	}
+
 	return nil, errors.New("could not extract video identification")
 }
 
-func extractShareTikTokURL(s string) string {
+func extractInstagramVideoID(message string) string {
+	instagramShareURLPattern := regexp.MustCompile(`https?://(www\.)?instagram\.com/reel/([A-Za-z0-9_-]+)/`)
+
+	return instagramShareURLPattern.FindString(message)
+}
+
+func extractShareTikTokURL(message string) string {
 	tikTokShareURLPattern := regexp.MustCompile(`https?://(vm|vt)\.tiktok\.com/[A-Za-z0-9]+/?`)
 
-	return tikTokShareURLPattern.FindString(s)
+	return tikTokShareURLPattern.FindString(message)
 }
 
 func extractTikTokVideoID(message string) string {
