@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 
 	"github.com/bifidokk/recipe-bot/internal/service/api"
 )
 
-const tikTokGetVideoByShareURL = "https://beta.tikhub.io/api/v1/tiktok/app/v3/fetch_one_video_by_share_url?share_url="
-const tikTokGetVideoByID = "https://beta.tikhub.io/api/v1/tiktok/app/v3/fetch_one_video?aweme_id="
+const tikTokGetVideoByShareURL = "https://api.tikhub.io/api/v1/tiktok/app/v3/fetch_one_video_by_share_url"
+const tikTokGetVideoByID = "https://api.tikhub.io/api/v1/tiktok/app/v3/fetch_one_video"
 
 type VideoDataResponse struct {
 	Code int `json:"code"`
@@ -53,7 +55,17 @@ func NewTikHubClient(apiToken string) *Client {
 }
 
 func (t *Client) GetVideoDataBySharedURL(sharedURL string) (*api.VideoData, error) {
-	response, err := t.request("GET", tikTokGetVideoByShareURL+sharedURL, nil)
+	sharedURL = t.normalizeTikTokURL(sharedURL)
+	baseURL, err := url.Parse(tikTokGetVideoByShareURL)
+	if err != nil {
+		return nil, err
+	}
+
+	params := url.Values{}
+	params.Add("share_url", sharedURL)
+	baseURL.RawQuery = params.Encode()
+
+	response, err := t.request("GET", baseURL.String(), nil)
 
 	if err != nil {
 		return nil, err
@@ -74,6 +86,11 @@ func (t *Client) GetVideoDataBySharedURL(sharedURL string) (*api.VideoData, erro
 		return nil, fmt.Errorf("TikHub API returned error code: %d", videoDataResponse.Code)
 	}
 
+	if videoDataResponse.Data.AwemeDetail.Music.PlayURL.URI == "" {
+		log.Error().Msg("TikHub API returned empty audio URL")
+		return nil, fmt.Errorf("TikHub API returned empty audio URL")
+	}
+
 	videoData := &api.VideoData{
 		AudioURL:    videoDataResponse.Data.AwemeDetail.Music.PlayURL.URI,
 		Description: videoDataResponse.Data.AwemeDetail.OriginalClientText.MarkupText,
@@ -89,7 +106,18 @@ func (t *Client) GetVideoDataBySharedURL(sharedURL string) (*api.VideoData, erro
 }
 
 func (t *Client) GetVideoDataByVideoID(videoID string) (*api.VideoData, error) {
-	response, err := t.request("GET", tikTokGetVideoByID+videoID, nil)
+	baseURL, err := url.Parse(tikTokGetVideoByID)
+	if err != nil {
+		return nil, err
+	}
+
+	params := url.Values{}
+	params.Add("aweme_id", videoID)
+	baseURL.RawQuery = params.Encode()
+
+	log.Info().Msgf("Constructed TikHub URL: %s", baseURL.String())
+
+	response, err := t.request("GET", baseURL.String(), nil)
 
 	if err != nil {
 		return nil, err
@@ -108,6 +136,11 @@ func (t *Client) GetVideoDataByVideoID(videoID string) (*api.VideoData, error) {
 	if videoDataResponse.Code != 200 {
 		log.Error().Msgf("TikHub API returned non-success code: %d", videoDataResponse.Code)
 		return nil, fmt.Errorf("TikHub API returned error code: %d", videoDataResponse.Code)
+	}
+
+	if videoDataResponse.Data.AwemeDetail.Music.PlayURL.URI == "" {
+		log.Error().Msg("TikHub API returned empty audio URL")
+		return nil, fmt.Errorf("TikHub API returned empty audio URL")
 	}
 
 	log.Info().Msgf("Video data: %v", videoDataResponse)
@@ -136,6 +169,8 @@ func (t *Client) request(method string, url string, body io.Reader) ([]byte, err
 	}
 
 	req.Header.Set("Authorization", "Bearer "+t.apiToken)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "TikHub-Go-Client/1.0")
 
 	resp, err := t.httpClient.Do(req)
 	if err != nil {
@@ -151,7 +186,7 @@ func (t *Client) request(method string, url string, body io.Reader) ([]byte, err
 	if resp.StatusCode != http.StatusOK {
 		responseBody, _ := io.ReadAll(resp.Body)
 		log.Error().Msgf("TikHub API error response: %s", string(responseBody))
-		return nil, fmt.Errorf("failed to fetch data: %s", resp.Status)
+		return nil, fmt.Errorf("failed to fetch data: %s, response: %s", resp.Status, string(responseBody))
 	}
 
 	responseBody, err := io.ReadAll(resp.Body)
@@ -161,4 +196,25 @@ func (t *Client) request(method string, url string, body io.Reader) ([]byte, err
 	}
 
 	return responseBody, err
+}
+
+func (t *Client) normalizeTikTokURL(url string) string {
+	url = strings.TrimSuffix(url, "/")
+
+	if strings.Contains(url, "vm.tiktok.com/") {
+		parts := strings.Split(url, "vm.tiktok.com/")
+		if len(parts) == 2 {
+			id := parts[1]
+			return fmt.Sprintf("https://www.tiktok.com/t/%s/", id)
+		}
+	}
+
+	if strings.HasPrefix(url, "https://www.tiktok.com/") {
+		if !strings.HasSuffix(url, "/") {
+			return url + "/"
+		}
+		return url
+	}
+
+	return url
 }
