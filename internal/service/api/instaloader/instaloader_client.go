@@ -2,40 +2,214 @@ package instaloader
 
 import (
 	"errors"
+	"fmt"
+	"io"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/bifidokk/recipe-bot/internal/service/api"
 	"github.com/rs/zerolog/log"
 )
 
 type Client struct {
+	tempDir string
+}
+
+type InstagramMetadata struct {
+	Caption      string `json:"caption"`
+	ThumbnailURL string `json:"thumbnail_url"`
 }
 
 func NewInstaloaderClient() *Client {
-	return &Client{}
+	tempDir := "/tmp/instaloader"
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		log.Error().Err(err).Msg("Failed to create temp directory")
+		tempDir = "/tmp"
+	}
+
+	return &Client{
+		tempDir: tempDir,
+	}
 }
 
-func (t *Client) GetVideoDataBySharedURL(sharedURL string) (*api.VideoData, error) {
-	pattern := regexp.MustCompile(`https?://www\.instagram\.com/reel/([a-zA-Z0-9_-]+)`)
-	matches := pattern.FindStringSubmatch(sharedURL)
-
-	if len(matches) < 2 {
-		return nil, errors.New("invalid Instagram shared URL")
+func (c *Client) GetVideoDataBySharedURL(sharedURL string) (*api.VideoData, error) {
+	shortcode, err := c.extractShortcode(sharedURL)
+	if err != nil {
+		return nil, err
 	}
 
-	videoID := matches[1]
+	log.Info().Msgf("Extracted Instagram shortcode: %s", shortcode)
 
-	log.Info().Msgf("Extracted video ID: %s", videoID)
+	downloadDir := filepath.Join(c.tempDir, shortcode)
+	if err := os.MkdirAll(downloadDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create download directory: %w", err)
+	}
+	defer os.RemoveAll(downloadDir) // Clean up
 
-	// #nosec G204 -- shortcode is validated via regex
-	cmd := exec.Command("instaloader", "--dirname-pattern=/tmp/"+videoID, "--", "-"+videoID)
-
-	if err := cmd.Run(); err != nil {
-		log.Error().Err(err).Msg("Failed to download reel")
+	err = c.downloadReel(shortcode, downloadDir)
+	if err != nil {
+		return nil, err
 	}
 
-	log.Info().Msgf("Downloaded video with ID: %s", videoID)
+	videoFile, err := c.findVideoFile(downloadDir)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, errors.New("not implemented")
+	audioFile, err := c.convertVideoToAudio(videoFile)
+	if err != nil {
+		return nil, err
+	}
+
+	// Need to store to get text from audio
+	persistentAudioFile, err := c.copyToPersistentLocation(audioFile, shortcode)
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to copy audio file to persistent location, using original")
+		persistentAudioFile = audioFile
+	}
+
+	return &api.VideoData{
+		AudioURL:    persistentAudioFile,
+		Description: "",
+		ShareURL:    sharedURL,
+		CoverURL:    "",
+	}, nil
+}
+
+func (c *Client) extractShortcode(url string) (string, error) {
+	patterns := []string{
+		`https?://www\.instagram\.com/reel/([a-zA-Z0-9_-]+)`,
+		`https?://instagram\.com/reel/([a-zA-Z0-9_-]+)`,
+		`https?://www\.instagram\.com/p/([a-zA-Z0-9_-]+)`,
+		`https?://instagram\.com/p/([a-zA-Z0-9_-]+)`,
+	}
+
+	for _, pattern := range patterns {
+		regex := regexp.MustCompile(pattern)
+		matches := regex.FindStringSubmatch(url)
+		if len(matches) >= 2 {
+			shortcode := matches[1]
+			// Add dash prefix to shortcode for instaloader
+			if !strings.HasPrefix(shortcode, "-") {
+				shortcode = "-" + shortcode
+			}
+			return shortcode, nil
+		}
+	}
+
+	return "", errors.New("invalid Instagram URL format")
+}
+
+func (c *Client) downloadReel(shortcode, downloadDir string) error {
+	cmd := exec.Command("instaloader",
+		"--dirname-pattern="+downloadDir,
+		"--",
+		shortcode,
+	)
+
+	log.Info().Msgf("Running instaloader command: %s", cmd.String())
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Error().Err(err).Msgf("Instaloader failed: %s", string(output))
+		return fmt.Errorf("instaloader failed: %w", err)
+	}
+
+	log.Info().Msgf("Instaloader output: %s", string(output))
+
+	return nil
+}
+
+func (c *Client) findVideoFile(downloadDir string) (string, error) {
+	// Look for video files in the download directory
+	// Instaloader creates files with timestamp pattern: 2024-09-01_06-23-27_UTC.mp4
+	extensions := []string{".mp4", ".mov", ".avi", ".mkv"}
+	var videoFile string
+
+	err := filepath.Walk(downloadDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		for _, ext := range extensions {
+			if strings.HasSuffix(strings.ToLower(path), ext) {
+				videoFile = path
+				return filepath.SkipDir
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("failed to find video file: %w", err)
+	}
+
+	if videoFile == "" {
+		return "", fmt.Errorf("no video file found in directory: %s", downloadDir)
+	}
+
+	log.Info().Msgf("Found video file: %s", videoFile)
+	return videoFile, nil
+}
+
+func (c *Client) convertVideoToAudio(videoFile string) (string, error) {
+	audioFile := strings.TrimSuffix(videoFile, filepath.Ext(videoFile)) + ".mp3"
+
+	cmd := exec.Command("ffmpeg",
+		"-i", videoFile,
+		"-vn", // No video
+		"-acodec", "mp3",
+		"-ab", "128k",
+		"-ar", "44100",
+		"-y", // Overwrite output file
+		audioFile,
+	)
+
+	log.Info().Msgf("Converting video to audio: %s", cmd.String())
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Error().Err(err).Msgf("FFmpeg failed: %s", string(output))
+		return "", fmt.Errorf("ffmpeg conversion failed: %w", err)
+	}
+
+	log.Info().Msgf("Audio conversion successful: %s", audioFile)
+	return audioFile, nil
+}
+
+func (c *Client) copyToPersistentLocation(audioFile, shortcode string) (string, error) {
+	persistentDir := "/tmp/recipe-bot-audio"
+	if err := os.MkdirAll(persistentDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create persistent directory: %w", err)
+	}
+
+	persistentFile := filepath.Join(persistentDir, shortcode+".mp3")
+
+	src, err := os.Open(audioFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to open source file: %w", err)
+	}
+	defer src.Close()
+
+	dst, err := os.Create(persistentFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to create destination file: %w", err)
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, src)
+	if err != nil {
+		return "", fmt.Errorf("failed to copy file: %w", err)
+	}
+
+	log.Info().Msgf("Copied audio file to persistent location: %s", persistentFile)
+	return persistentFile, nil
 }

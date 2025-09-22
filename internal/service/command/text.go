@@ -2,6 +2,8 @@ package command
 
 import (
 	"database/sql"
+	"os"
+	"strings"
 
 	"github.com/bifidokk/recipe-bot/internal/entity"
 	"github.com/bifidokk/recipe-bot/internal/service"
@@ -80,11 +82,18 @@ func (c *TextCommand) Register(b *telebot.Bot) {
 			ShareURL:     videoData.ShareURL,
 		}
 
-		filePath, err := utils.DownloadFileFromURL(videoData.AudioURL)
+		var filePath string
 
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to download video file")
-			return err
+		// Check if AudioURL is a local file path or remote URL
+		if strings.HasPrefix(videoData.AudioURL, "http://") || strings.HasPrefix(videoData.AudioURL, "https://") {
+			filePath, err = utils.DownloadFileFromURL(videoData.AudioURL)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to download video file")
+				return err
+			}
+		} else {
+			filePath = videoData.AudioURL
+			log.Info().Msgf("Using local audio file: %s", filePath)
 		}
 
 		text, err := c.openai.ConvertSpeechToText(filePath)
@@ -134,6 +143,15 @@ func (c *TextCommand) Register(b *telebot.Bot) {
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to send message")
 			return err
+		}
+
+		// Clean up local audio files after processing
+		if !strings.HasPrefix(filePath, "http") {
+			if err := os.Remove(filePath); err != nil {
+				log.Warn().Err(err).Msgf("Failed to clean up local audio file: %s", filePath)
+			} else {
+				log.Info().Msgf("Cleaned up local audio file: %s", filePath)
+			}
 		}
 
 		return nil

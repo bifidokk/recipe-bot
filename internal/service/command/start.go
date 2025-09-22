@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	startMenuText = "👨‍🍳 Hey there, food lover! Send me any TikTok recipe video and I'll instantly convert it into a clear, easy-to-follow recipe text. No more pausing or squinting at the screen! Just share the URL and let's start cooking! 🍽️ Note: You can add up to 5 recipes."
+	startMenuText = "👨‍🍳 Hey there, food lover! Send me any TikTok or Instagram recipe video and I'll instantly convert it into a clear, easy-to-follow recipe text. No more pausing or squinting at the screen! Just share the URL and let's start cooking! 🍽️\n\n📱 Supported platforms:\n• TikTok: vm.tiktok.com links\n• Instagram: Reels and Posts\n\nNote: You can add up to 5 recipes."
 )
 
 type StartCommand struct{}

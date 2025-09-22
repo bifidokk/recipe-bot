@@ -1,0 +1,135 @@
+{
+  "rules": [
+    {
+      "pattern": "cmd/main.go",
+      "include": true
+    },
+    {
+      "pattern": "internal/**/*",
+      "include": true
+    },
+    {
+      "pattern": "migrations/**/*",
+      "include": true
+    },
+    {
+      "pattern": "README.md",
+      "include": true
+    },
+    {
+      "pattern": "Makefile",
+      "include": true
+    },
+    {
+      "pattern": "setup-dependencies.sh",
+      "include": true
+    },
+    {
+      "pattern": ".git",
+      "exclude": true
+    },
+    {
+      "pattern": "*.log",
+      "exclude": true
+    },
+    {
+      "pattern": "tmp",
+      "exclude": true
+    },
+    {
+      "pattern": "/tmp/**",
+      "exclude": true
+    },
+    {
+      "pattern": "*.test",
+      "exclude": true
+    },
+    {
+      "pattern": "vendor",
+      "exclude": true
+    },
+    {
+      "pattern": "*.exe",
+      "exclude": true
+    },
+    {
+      "pattern": "*.out",
+      "exclude": true
+    },
+    {
+      "pattern": "*.env*",
+      "exclude": true
+    },
+    {
+      "pattern": "*.mp3",
+      "exclude": true
+    },
+    {
+      "pattern": "*.mp4",
+      "exclude": true
+    },
+    {
+      "pattern": "*.jpg",
+      "exclude": true
+    },
+    {
+      "pattern": "*.jpeg",
+      "exclude": true
+    },
+    {
+      "pattern": "*.png",
+      "exclude": true
+    },
+    {
+      "pattern": "*.go",
+      "include": true
+    },
+    {
+      "pattern": "*.sql",
+      "include": true
+    },
+    {
+      "pattern": "go.mod",
+      "include": true
+    },
+    {
+      "pattern": "go.sum",
+      "include": true
+    }
+  ],
+  "context": {
+    "description": "Recipe Bot - Telegram bot that extracts recipes from TikTok and Instagram videos using OpenAI",
+    "tech_stack": [
+      "Go 1.23+",
+      "Telegram Bot API (telebot.v4)",
+      "PostgreSQL with pgx",
+      "OpenAI API (Whisper + GPT-4)",
+      "TikHub API for TikTok",
+      "Instaloader for Instagram",
+      "FFmpeg for audio conversion"
+    ],
+    "supported_platforms": [
+      "TikTok: vm.tiktok.com, www.tiktok.com URLs",
+      "Instagram: Reels and Posts (instagram.com/reel/, instagram.com/p/)"
+    ],
+    "key_directories": {
+      "cmd/": "Application entry point",
+      "internal/app/": "Application setup and dependency injection",
+      "internal/service/": "Business logic services",
+      "internal/service/api/": "External API clients (TikHub, OpenAI, Instaloader)",
+      "internal/service/command/": "Telegram bot command handlers",
+      "internal/repository/": "Database access layer",
+      "internal/entity/": "Data models",
+      "internal/config/": "Configuration management",
+      "internal/middleware/": "Bot middleware (auth, logging)",
+      "migrations/": "Database schema migrations"
+    },
+    "important_notes": [
+      "Instagram requires Instaloader and FFmpeg to be installed",
+      "TikTok uses TikHub API for video data extraction",
+      "Audio files are temporarily stored in /tmp/recipe-bot-audio/",
+      "Database migrations use Goose",
+      "All API tokens are loaded from environment variables"
+    ]
+  }
+}
