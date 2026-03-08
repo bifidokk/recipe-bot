@@ -218,7 +218,7 @@ func (t *Client) normalizeTikTokURL(inputURL string) string {
 
 func (t *Client) resolveShortURL(shortURL string) (string, error) {
 	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
@@ -227,7 +227,9 @@ func (t *Client) resolveShortURL(shortURL string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	location := resp.Header.Get("Location")
 	if location == "" {
