@@ -45,7 +45,7 @@ func (c *TextCommand) Register(b *telebot.Bot) {
 		if !c.videoService.HasVideo(ctx.Text()) {
 			_, err := b.Send(ctx.Sender(), "Sorry but I could not find video in your message")
 
-			log.Error().Err(err)
+			log.Error().Err(err).Msg("Could not find video in message")
 			return err
 		}
 
@@ -54,7 +54,7 @@ func (c *TextCommand) Register(b *telebot.Bot) {
 		if u.RecipeLimit <= 0 {
 			_, err := b.Send(ctx.Sender(), "Sorry, you have run out of available recipes. Please check your recipe limit.")
 
-			log.Error().Err(err)
+			log.Error().Err(err).Msg("User exceeded recipe limit")
 			return err
 		}
 
@@ -66,9 +66,11 @@ func (c *TextCommand) Register(b *telebot.Bot) {
 		videoData, err := c.videoService.GetVideoData(ctx.Text())
 
 		if err != nil {
-			_, err = b.Send(ctx.Sender(), "Sorry but I could not get video data from your message")
-
-			log.Error().Err(err)
+			log.Error().Err(err).Msgf("Failed to get video data from message: %s", ctx.Text())
+			_, sendErr := b.Send(ctx.Sender(), "Sorry but I could not get video data from your message")
+			if sendErr != nil {
+				log.Error().Err(sendErr).Msg("Failed to send error message to user")
+			}
 			return err
 		}
 
