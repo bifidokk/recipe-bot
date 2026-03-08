@@ -198,23 +198,42 @@ func (t *Client) request(method string, url string, body io.Reader) ([]byte, err
 	return responseBody, err
 }
 
-func (t *Client) normalizeTikTokURL(url string) string {
-	url = strings.TrimSuffix(url, "/")
-
-	if strings.Contains(url, "vm.tiktok.com/") {
-		parts := strings.Split(url, "vm.tiktok.com/")
-		if len(parts) == 2 {
-			id := parts[1]
-			return fmt.Sprintf("https://www.tiktok.com/t/%s/", id)
+func (t *Client) normalizeTikTokURL(inputURL string) string {
+	// Short URLs (vm.tiktok.com, vt.tiktok.com) need to be resolved via redirect
+	if strings.Contains(inputURL, "vm.tiktok.com") || strings.Contains(inputURL, "vt.tiktok.com") {
+		resolved, err := t.resolveShortURL(inputURL)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to resolve short TikTok URL, using original")
+			return inputURL
 		}
+		inputURL = resolved
 	}
 
-	if strings.HasPrefix(url, "https://www.tiktok.com/") {
-		if !strings.HasSuffix(url, "/") {
-			return url + "/"
-		}
-		return url
+	if !strings.HasSuffix(inputURL, "/") {
+		inputURL += "/"
 	}
 
-	return url
+	return inputURL
+}
+
+func (t *Client) resolveShortURL(shortURL string) (string, error) {
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	resp, err := client.Get(shortURL)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	location := resp.Header.Get("Location")
+	if location == "" {
+		return shortURL, nil
+	}
+
+	log.Info().Msgf("Resolved short URL %s -> %s", shortURL, location)
+	return location, nil
 }

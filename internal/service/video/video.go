@@ -116,10 +116,8 @@ func (t *videoService) extractVideoIdentification(message string) (*videoIdentif
 
 func extractInstagramVideoID(message string) string {
 	patterns := []string{
-		`https?://(www\.)?instagram\.com/reel/([A-Za-z0-9_-]+)`,
+		`https?://(www\.)?instagram\.com/reels?/([A-Za-z0-9_-]+)`,
 		`https?://(www\.)?instagram\.com/p/([A-Za-z0-9_-]+)`,
-		`https?://instagram\.com/reel/([A-Za-z0-9_-]+)`,
-		`https?://instagram\.com/p/([A-Za-z0-9_-]+)`,
 	}
 
 	for _, pattern := range patterns {

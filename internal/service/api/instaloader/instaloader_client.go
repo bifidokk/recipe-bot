@@ -85,17 +85,15 @@ func (c *Client) GetVideoDataBySharedURL(sharedURL string) (*api.VideoData, erro
 
 func (c *Client) extractShortcode(url string) (string, error) {
 	patterns := []string{
-		`https?://www\.instagram\.com/reel/([a-zA-Z0-9_-]+)`,
-		`https?://instagram\.com/reel/([a-zA-Z0-9_-]+)`,
-		`https?://www\.instagram\.com/p/([a-zA-Z0-9_-]+)`,
-		`https?://instagram\.com/p/([a-zA-Z0-9_-]+)`,
+		`https?://(www\.)?instagram\.com/reels?/([a-zA-Z0-9_-]+)`,
+		`https?://(www\.)?instagram\.com/p/([a-zA-Z0-9_-]+)`,
 	}
 
 	for _, pattern := range patterns {
 		regex := regexp.MustCompile(pattern)
 		matches := regex.FindStringSubmatch(url)
-		if len(matches) >= 2 {
-			shortcode := matches[1]
+		if len(matches) >= 3 {
+			shortcode := matches[2]
 			// Add dash prefix to shortcode for instaloader
 			if !strings.HasPrefix(shortcode, "-") {
 				shortcode = "-" + shortcode
